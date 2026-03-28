@@ -12,7 +12,8 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 sys.path.insert(0, os.path.dirname(__file__))
 from db.database import (
     initialize_db, save_checkin, get_all_checkins,
-    get_employee_checkins, get_stats, get_employees, delete_checkin
+    get_employee_checkins, get_stats, get_employees,
+    delete_checkin, delete_employee_visits, delete_all_visits
 )
 from ai.extractor import extract_checkin_data
 
@@ -99,14 +100,29 @@ def employees():
 
 @app.route('/api/checkins/<int:record_id>', methods=['DELETE'])
 def delete_checkin_api(record_id):
-    """Delete a check-in record. Employee can only delete their own."""
     data = request.json or {}
     employee_id = data.get('employee_id', '')
     role = data.get('role', 'employee')
     success = delete_checkin(record_id, employee_id, role)
     if success:
-        return jsonify({'success': True, 'message': 'تم حذف السجل بنجاح'})
+        return jsonify({'success': True})
     return jsonify({'error': 'لم يتم العثور على السجل أو لا تملك صلاحية الحذف'}), 403
+
+@app.route('/api/checkins/employee/<emp_id>', methods=['DELETE'])
+def delete_employee_records(emp_id):
+    data = request.json or {}
+    if data.get('role') != 'admin':
+        return jsonify({'error': 'غير مصرح'}), 403
+    count = delete_employee_visits(emp_id)
+    return jsonify({'success': True, 'deleted': count})
+
+@app.route('/api/checkins/all', methods=['DELETE'])
+def delete_all_records():
+    data = request.json or {}
+    if data.get('role') != 'admin':
+        return jsonify({'error': 'غير مصرح'}), 403
+    count = delete_all_visits()
+    return jsonify({'success': True, 'deleted': count})
 
 if __name__ == '__main__':
     initialize_db()

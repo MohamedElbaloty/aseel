@@ -216,24 +216,42 @@ def get_employees():
 def delete_checkin(record_id, employee_id=None, role='employee'):
     initialize_db()
     if role == 'admin':
-        SQL = 'DELETE FROM checkins WHERE id=%s'
-        args = (record_id,)
+        SQL = 'DELETE FROM checkins WHERE id=%s'; args = (record_id,)
     else:
-        SQL = 'DELETE FROM checkins WHERE id=%s AND employee_id=%s'
-        args = (record_id, employee_id)
-
+        SQL = 'DELETE FROM checkins WHERE id=%s AND employee_id=%s'; args = (record_id, employee_id)
     if USE_PG:
         conn = get_pg()
         try:
-            with conn.cursor() as cur:
-                cur.execute(SQL, args)
-                affected = cur.rowcount
-            conn.commit()
-            return affected > 0
-        finally:
-            conn.close()
+            with conn.cursor() as cur: cur.execute(SQL, args); affected = cur.rowcount
+            conn.commit(); return affected > 0
+        finally: conn.close()
     else:
         with get_sqlite() as c:
-            affected = c.execute(SQL.replace('%s','?'), args).rowcount
-            c.commit()
-            return affected > 0
+            affected = c.execute(SQL.replace('%s','?'), args).rowcount; c.commit(); return affected > 0
+
+def delete_employee_visits(emp_id):
+    """Delete all visits of one employee."""
+    initialize_db()
+    SQL = 'DELETE FROM checkins WHERE employee_id=%s'
+    if USE_PG:
+        conn = get_pg()
+        try:
+            with conn.cursor() as cur: cur.execute(SQL, (emp_id,)); count = cur.rowcount
+            conn.commit(); return count
+        finally: conn.close()
+    else:
+        with get_sqlite() as c:
+            count = c.execute(SQL.replace('%s','?'), (emp_id,)).rowcount; c.commit(); return count
+
+def delete_all_visits():
+    """Delete every visit record."""
+    initialize_db()
+    if USE_PG:
+        conn = get_pg()
+        try:
+            with conn.cursor() as cur: cur.execute('DELETE FROM checkins'); count = cur.rowcount
+            conn.commit(); return count
+        finally: conn.close()
+    else:
+        with get_sqlite() as c:
+            count = c.execute('DELETE FROM checkins').rowcount; c.commit(); return count

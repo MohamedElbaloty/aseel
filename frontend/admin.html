@@ -163,6 +163,52 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
 /* Responsive */
 @media(max-width:1100px){ .charts-row { grid-template-columns: 1fr 1fr; } }
 @media(max-width:900px) { .charts-row { grid-template-columns: 1fr; } .main { margin-right: 0; padding: 1.25rem; } .sidebar { display: none; } }
+
+/* Admin delete */
+.btn-del-row {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171; border-radius: 6px; padding: 0.3rem 0.6rem;
+  font-size: 0.72rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; font-family: 'Cairo', sans-serif; white-space: nowrap;
+}
+.btn-del-row:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); }
+.btn-danger {
+  background: linear-gradient(135deg,#ef4444,#b91c1c); border: none;
+  border-radius: 10px; padding: 0.65rem 1.2rem; color: white;
+  font-family: 'Cairo', sans-serif; font-size: 0.82rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem;
+}
+.btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(239,68,68,0.4); }
+
+/* Confirm overlay */
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(5px); animation: fadeInRow 0.2s ease;
+}
+.confirm-box {
+  background: #0e1526; border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 20px; padding: 2rem; max-width: 380px; width: 90%;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.confirm-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.confirm-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+.confirm-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
+.confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+.btn-cancel2 {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; padding: 0.7rem 1.5rem;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  font-family: 'Cairo', sans-serif; transition: all 0.2s;
+}
+.btn-cancel2:hover { background: var(--surface); }
+.btn-confirm-del {
+  background: linear-gradient(135deg,#ef4444,#b91c1c); border: none;
+  color: white; border-radius: 10px; padding: 0.7rem 1.5rem;
+  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  font-family: 'Cairo', sans-serif; transition: all 0.2s;
+}
+.btn-confirm-del:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
 </style>
 </head>
 <body>
@@ -259,7 +305,10 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
     <div class="card">
       <div class="card-header">
         <div class="card-title">📋 جميع السجلات <span style="color:var(--muted);font-weight:400;font-size:0.8rem" id="rec-count"></span></div>
-        <button class="btn-export" onclick="exportCSV()">⬇️ تصدير CSV</button>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn-danger" onclick="deleteAllVisits()">🗑️ حذف الكل</button>
+          <button class="btn-export" onclick="exportCSV()">⬇️ تصدير CSV</button>
+        </div>
       </div>
 
       <div class="filters-row">
@@ -291,6 +340,7 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
               <th>م. الإدارة</th>
               <th>هدف الاجتماع</th>
               <th>الزيارة القادمة</th>
+              <th>حذف</th>
             </tr>
           </thead>
           <tbody id="records-tbody">
@@ -311,7 +361,10 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
       <div><div class="page-title">الموظفون 👥</div><div class="page-subtitle">تفاصيل أداء كل موظف</div></div>
     </div>
     <div class="card">
-      <div class="card-header"><div class="card-title">👥 قائمة الموظفين</div></div>
+      <div class="card-header">
+        <div class="card-title">👥 قائمة الموظفين</div>
+        <button class="btn-danger" onclick="deleteAllVisits()">🗑️ مسح كل الزيارات</button>
+      </div>
       <div id="emp-table-wrap">
         <div class="pulse" style="width:100%;margin-bottom:.75rem"></div>
         <div class="pulse" style="width:80%;margin-bottom:.75rem"></div>
@@ -466,7 +519,7 @@ function renderTable() {
   document.getElementById('rec-count').textContent = `(${filtered.length} سجل)`;
 
   if(!page.length) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><div class="icon">📭</div><p>لا توجد سجلات</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13"><div class="empty"><div class="icon">📭</div><p>لا توجد سجلات</p></div></td></tr>`;
     return;
   }
 
@@ -523,7 +576,7 @@ async function loadEmployeePage() {
   document.getElementById('emp-table-wrap').innerHTML = rows.length ? `
     <div class="table-wrapper">
     <table>
-      <thead><tr><th>#</th><th>اسم الموظف</th><th>الإجمالي</th><th>اليوم</th><th>حضوري</th><th>مكالمات</th><th>أونلاين</th></tr></thead>
+      <thead><tr><th>#</th><th>اسم الموظف</th><th>الإجمالي</th><th>اليوم</th><th>حضوري</th><th>مكالمات</th><th>أونلاين</th><th>حذف زياراته</th></tr></thead>
       <tbody>${rows.map((e,i) => `<tr>
         <td style="color:var(--muted)">${i+1}</td>
         <td><div style="display:flex;align-items:center;gap:.6rem">
@@ -534,6 +587,7 @@ async function loadEmployeePage() {
         <td><span class="badge b-green">🏢 ${e.inperson}</span></td>
         <td><span class="badge b-amber">📞 ${e.phone}</span></td>
         <td><span class="badge b-blue">💻 ${e.online}</span></td>
+        <td><button class="btn-del-row" onclick="deleteEmpVisits('${e.id}','${e.name}')">🗑️ مسح زياراته</button></td>
       </tr>`).join('')}</tbody>
     </table></div>` : '<div class="empty"><div class="icon">👥</div><p>لا يوجد بيانات موظفين</p></div>';
 }
@@ -555,11 +609,83 @@ function exportCSV() {
   a.click();
 }
 
+// ── Admin Delete Functions ────────────────────────────────────────────────────
+async function adminConfirm(title, sub) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.className = 'confirm-overlay';
+    ov.innerHTML = `<div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-title">${title}</div>
+      <div class="confirm-sub">${sub}</div>
+      <div class="confirm-actions">
+        <button class="btn-cancel2" id="ac">إلغاء</button>
+        <button class="btn-confirm-del" id="ao">نعم، احذف</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    document.getElementById('ao').onclick = () => { ov.remove(); resolve(true); };
+    document.getElementById('ac').onclick = () => { ov.remove(); resolve(false); };
+    ov.onclick = e => { if(e.target===ov){ ov.remove(); resolve(false); } };
+  });
+}
+
+async function deleteOneVisit(id) {
+  if (!await adminConfirm('حذف الزيارة', 'هل أنت متأكد؟ لا يمكن التراجع.')) return;
+  const res = await fetch(`/api/checkins/${id}`, {
+    method:'DELETE', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role:'admin'})
+  });
+  if (res.ok) {
+    const row = document.getElementById(`row-${id}`);
+    if (row) { row.style.opacity='0'; row.style.transition='opacity .3s'; setTimeout(()=>row.remove(),300); }
+    allRecords = allRecords.filter(r=>r.id!==id);
+    filtered   = filtered.filter(r=>r.id!==id);
+    document.getElementById('rec-count').textContent = `(${filtered.length} سجل)`;
+    showToast('تم حذف الزيارة ✅');
+  }
+}
+
+async function deleteEmpVisits(empId, empName) {
+  if (!await adminConfirm(`مسح زيارات ${empName}`, `سيتم حذف جميع زيارات هذا الموظف نهائياً.`)) return;
+  const res = await fetch(`/api/checkins/employee/${empId}`, {
+    method:'DELETE', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role:'admin'})
+  });
+  const json = await res.json();
+  if (res.ok) {
+    allRecords = allRecords.filter(r=>r.employee_id!==empId);
+    showToast(`تم حذف ${json.deleted} زيارة بنجاح ✅`);
+    loadEmployeePage();
+  }
+}
+
+async function deleteAllVisits() {
+  if (!await adminConfirm('حذف الكل', 'سيتم حذف جميع الزيارات من قاعدة البيانات. لا يمكن التراجع!')) return;
+  const res = await fetch('/api/checkins/all', {
+    method:'DELETE', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role:'admin'})
+  });
+  const json = await res.json();
+  if (res.ok) {
+    allRecords = []; filtered = [];
+    showToast(`تم حذف ${json.deleted} زيارة ✅`);
+    loadDashboard();
+  }
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;padding:1rem 2rem;border-radius:14px;font-weight:600;font-size:.9rem;z-index:1000;backdrop-filter:blur(20px);transition:opacity .4s';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, 3000);
+}
+
 function logout() { sessionStorage.clear(); window.location.href = '/'; }
 
 // Init
 loadDashboard();
-setInterval(loadDashboard, 60000); // auto-refresh every minute
+setInterval(loadDashboard, 60000);
 </script>
 </body>
 </html>
