@@ -627,8 +627,11 @@ function renderTable() {
       <td title="${r.visit_reason||''}">${r.visit_reason||'–'}</td>
       <td style="text-align:center">${bool(r.account_manager_present)}</td>
       <td style="text-align:center">${bool(r.admin_manager_present)}</td>
-      <td title="${r.meeting_objective||''}" style="max-width:150px">${(r.meeting_objective||'–').slice(0,50)}${(r.meeting_objective||'').length>50?'...':''}</td>
+      <td title="${r.meeting_objective||''}" style="max-width:150px">${(r.meeting_objective||'–').slice(0,25)}${(r.meeting_objective||'').length>25?'...':''}</td>
       <td style="color:var(--muted)">${(r.next_visit_date||'').slice(0,10)||'–'}</td>
+      <td style="text-align:center">
+        <button class="btn-del-row" style="padding: 4px 8px;" onclick="deleteOneVisit(${r.id})">🗑️ حذف</button>
+      </td>
     </tr>`;
   }).join('');
 

@@ -263,11 +263,14 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 .hist-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem 1.25rem; gap: 1rem;
+  padding: 1.25rem; gap: 1rem;
   border-bottom: 1px solid var(--border);
   background: rgba(255,255,255,0.02);
   cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
+.hist-header * { pointer-events: none; }
 
 .hist-body { 
   padding: 1.1rem 1.25rem;
@@ -285,9 +288,10 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 }
 
 .chevron {
-  font-size: 0.9rem; color: var(--muted);
-  transition: transform 0.3s ease;
+  font-size: 1rem; color: var(--accent);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  margin-right: 0.5rem;
 }
 .hist-client-wrap { display: flex; align-items: center; gap: 0.75rem; }
 .hist-client-icon {
@@ -702,7 +706,6 @@ function toggleSidebar() {
 }
 
 function toggleCard(header) {
-  if (window.innerWidth > 900) return;
   const card = header.closest('.hist-card');
   card.classList.toggle('collapsed');
 }
