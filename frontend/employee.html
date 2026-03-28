@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الزيارة — نظام Check-in الذكي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #070b18;
+  --surface: rgba(255,255,255,0.04);
+  --surface2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border-focus: rgba(99,102,241,0.5);
+  --accent: #6366f1;
+  --accent2: #8b5cf6;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Background */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+.bg-orb {
+  position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.07; pointer-events: none;
+}
+.orb1 { width: 600px; height: 600px; background: #6366f1; top: -20%; right: -10%; }
+.orb2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -10%; left: -5%; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 240px;
+  background: rgba(10,14,30,0.95);
+  border-left: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  display: flex; flex-direction: column;
+  z-index: 100; padding: 1.5rem 0;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-logo {
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.sidebar-logo-icon {
+  width: 42px; height: 42px;
+  background: var(--gradient); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  box-shadow: 0 4px 15px rgba(99,102,241,0.4); flex-shrink: 0;
+}
+.sidebar-logo-text { font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
+.sidebar-logo-text small { font-weight: 400; color: var(--muted); font-size: 0.72rem; }
+
+.sidebar-nav { flex: 1; padding: 1.5rem 0; }
+.nav-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.8rem 1.5rem;
+  cursor: pointer; transition: all 0.2s;
+  font-size: 0.9rem; font-weight: 600; color: var(--muted);
+  border-right: 3px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: var(--surface); }
+.nav-item.active { color: var(--accent); border-right-color: var(--accent); background: rgba(99,102,241,0.08); }
+.nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+
+.sidebar-user {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.user-avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  background: var(--gradient);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 700;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 0.85rem; font-weight: 700; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+.user-role { font-size: 0.72rem; color: var(--accent); }
+.logout-btn {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 1rem; padding: 0.25rem;
+  transition: color 0.2s;
+}
+.logout-btn:hover { color: var(--danger); }
+
+/* Main content */
+.main {
+  margin-right: 240px;
+  padding: 2rem;
+  position: relative; z-index: 1;
+  min-height: 100vh;
+}
+
+/* Top bar */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.page-title { font-size: 1.5rem; font-weight: 800; }
+.page-subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 0.15rem; }
+.date-badge {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.5rem 1rem;
+  font-size: 0.82rem; color: var(--muted);
+}
+
+/* Tabs */
+.content-tabs {
+  display: flex; gap: 0.5rem; margin-bottom: 2rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 0.4rem;
+}
+.ctab {
+  flex: 1; padding: 0.7rem;
+  background: none; border: none; border-radius: 10px;
+  cursor: pointer; font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem; font-weight: 600; color: var(--muted);
+  transition: all 0.2s;
+}
+.ctab:hover { color: var(--text); background: var(--surface2); }
+.ctab.active { background: var(--gradient); color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.3); }
+
+/* Cards */
+.card {
+  background: rgba(12,18,40,0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 1.75rem;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+}
+.card-title {
+  font-size: 1rem; font-weight: 700;
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1.25rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* AI Input Section */
+.ai-input-area {
+  position: relative;
+}
+.ai-textarea {
+  width: 100%; min-height: 140px;
+  background: rgba(99,102,241,0.05);
+  border: 2px solid rgba(99,102,241,0.2);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  color: var(--text); font-family: 'Cairo', sans-serif;
+  font-size: 0.95rem; line-height: 1.8;
+  outline: none; resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ai-textarea::placeholder { color: var(--muted); }
+.ai-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+.ai-hint {
+  margin-top: 0.75rem;
+  font-size: 0.78rem; color: var(--muted);
+  display: flex; align-items: flex-start; gap: 0.5rem;
+}
+
+.btn-ai {
+  margin-top: 1rem;
+  background: var(--gradient); border: none; border-radius: 12px;
+  padding: 0.9rem 2rem; color: white;
+  font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; transition: all 0.25s;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.btn-ai:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+.btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* AI result panel */
+.ai-result {
+  margin-top: 1.5rem;
+  background: rgba(99,102,241,0.05);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 16px; padding: 1.5rem;
+  display: none;
+}
+.ai-result.show { display: block; animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.ai-result-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.ai-result-title { font-size: 0.9rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.5rem; }
+
+/* Form fields grid */
+.fields-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.fields-grid .full { grid-column: 1 / -1; }
+
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.form-input, .form-select, .form-textarea {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 0.7rem 0.9rem;
+  color: var(--text); font-family: 'Cairo', sans-serif;
+  font-size: 0.88rem; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent); background: rgba(99,102,241,0.05); }
+.form-select option { background: #111827; }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-input::placeholder { color: var(--muted); }
+
+/* Radio group */
+.radio-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.radio-opt {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  cursor: pointer; font-size: 0.82rem; color: var(--muted);
+  transition: all 0.2s;
+}
+.radio-opt input { display: none; }
+.radio-opt:has(input:checked) {
+  border-color: var(--accent); color: var(--text);
+  background: rgba(99,102,241,0.12);
+}
+.radio-opt:hover { border-color: var(--accent); color: var(--text); }
+
+/* Submit */
+.btn-submit {
+  background: var(--gradient); border: none; border-radius: 14px;
+  padding: 1rem 2.5rem; color: white;
+  font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: all 0.25s;
+  display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* History list */
+.history-list { display: flex; flex-direction: column; gap: 1.25rem; }
+.hist-card {
+  background: rgba(12,18,40,0.85);
+  border: 1px solid var(--border); border-radius: 18px;
+  overflow: hidden; transition: all 0.25s;
+  animation: fadeIn 0.35s ease;
+}
+.hist-card:hover { border-color: rgba(99,102,241,0.35); box-shadow: 0 8px 30px rgba(99,102,241,0.1); }
+
+/* Card header strip */
+.hist-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem; gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.hist-client-wrap { display: flex; align-items: center; gap: 0.75rem; }
+.hist-client-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--gradient);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.hist-client { font-weight: 800; font-size: 1rem; }
+.hist-account { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+.hist-date-badge {
+  font-size: 0.75rem; color: var(--muted); white-space: nowrap;
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 0.3rem 0.75rem; border-radius: 99px;
+}
+
+/* Card body */
+.hist-body { padding: 1.1rem 1.25rem; }
+.hist-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+
+/* Detail rows */
+.hist-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; }
+.hist-detail {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  font-size: 0.82rem;
+}
+.hist-detail-icon { flex-shrink: 0; font-size: 0.9rem; margin-top: 0.05rem; }
+.hist-detail-label { color: var(--muted); font-size: 0.72rem; margin-bottom: 0.1rem; }
+.hist-detail-val { color: var(--text); font-weight: 600; line-height: 1.4; }
+.hist-detail.full { grid-column: 1 / -1; }
+
+/* Follow-ups section */
+.hist-followups {
+  margin-top: 0.85rem; padding-top: 0.85rem;
+  border-top: 1px dashed rgba(255,255,255,0.06);
+}
+.hist-followups-title { font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.hist-followup-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.8rem; color: var(--text); padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.hist-followup-item:last-child { border-bottom: none; }
+
+/* Badges */
+.badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 10px; border-radius: 99px;
+  font-size: 0.72rem; font-weight: 600;
+}
+.badge-indigo { background: rgba(99,102,241,0.12); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+.badge-green  { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+.badge-amber  { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+.badge-blue   { background: rgba(59,130,246,0.12); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+.badge-gray   { background: rgba(100,116,139,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+/* Success toast */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: rgba(16,185,129,0.15); backdrop-filter: blur(20px);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 14px; padding: 1rem 2rem;
+  font-weight: 600; color: #34d399; font-size: 0.9rem;
+  z-index: 1000; transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+  display: flex; align-items: center; gap: 0.5rem;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Spinner */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white; border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Loading pulse */
+.pulse-line {
+  height: 14px; background: var(--surface2); border-radius: 99px;
+  animation: pulse 1.5s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+/* Empty state */
+.empty { text-align: center; padding: 3rem; color: var(--muted); }
+.empty .icon { font-size: 3rem; margin-bottom: 0.75rem; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(240px); }
+  .main { margin-right: 0; padding: 1.25rem; }
+  .fields-grid { grid-template-columns: 1fr; }
+  .fields-grid .full { grid-column: 1; }
+}
+
+/* Delete button */
+.btn-delete {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171; border-radius: 8px;
+  padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  font-family: 'Cairo', sans-serif;
+}
+.btn-delete:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.5); transform: scale(1.03); }
+
+/* Confirm dialog */
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); animation: fadeIn 0.2s ease;
+}
+.confirm-box {
+  background: #0e1526; border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 20px; padding: 2rem; max-width: 380px; width: 90%;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.confirm-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.confirm-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+.confirm-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
+.confirm-actions { display: flex; gap: 0.75rem; justify-content: center; }
+.btn-cancel {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px;
+  padding: 0.7rem 1.5rem; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; font-family: 'Cairo', sans-serif; transition: all 0.2s;
+}
+.btn-cancel:hover { background: var(--surface); }
+.btn-confirm-del {
+  background: linear-gradient(135deg,#ef4444,#b91c1c); border: none;
+  color: white; border-radius: 10px;
+  padding: 0.7rem 1.5rem; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; font-family: 'Cairo', sans-serif; transition: all 0.2s;
+}
+.btn-confirm-del:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">📋</div>
+    <div class="sidebar-logo-text">
+      Check-in Bot<br>
+      <small>نظام الزيارات الذكي</small>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showTab('new')">
+      <span class="nav-icon">➕</span> تسجيل زيارة جديدة
+    </div>
+    <div class="nav-item" onclick="showTab('history')">
+      <span class="nav-icon">📅</span> سجل زياراتي
+    </div>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">م</div>
+    <div class="user-info">
+      <div class="user-name" id="user-name">...</div>
+      <div class="user-role">موظف</div>
+    </div>
+    <button class="logout-btn" onclick="logout()" title="تسجيل الخروج">🚪</button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="page-title">تسجيل زيارة جديدة</div>
+      <div class="page-subtitle" id="page-subtitle">أدخل تفاصيل اجتماعك وسيقوم الذكاء الاصطناعي بتعبئة النموذج تلقائياً</div>
+    </div>
+    <div class="date-badge" id="date-badge"></div>
+  </div>
+
+  <!-- NEW CHECKIN TAB -->
+  <div id="tab-new">
+
+    <!-- AI Input card -->
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-title">
+        🧠 الإدخال الذكي بالذكاء الاصطناعي
+        <span style="margin-right:auto;font-size:0.72rem;font-weight:400;color:var(--muted);background:rgba(99,102,241,0.1);padding:3px 10px;border-radius:99px">GPT-4o</span>
+      </div>
+
+      <div class="ai-input-area">
+        <textarea class="ai-textarea" id="ai-input" placeholder="اكتب تفاصيل الاجتماع بأي صيغة...
+
+مثال: زرت شركة الأفق اليوم الساعة 2 ظهراً بخصوص تمويل الأعمال. كان مدير الحساب حاضراً. هدف الاجتماع مناقشة تجديد العقد. الزيارة القادمة الأسبوع القادم."></textarea>
+        <div class="ai-hint">
+          💡 يمكنك الكتابة بالعربي أو الإنجليزي أو بالاثنين معاً — وسيستخرج النظام البيانات تلقائياً
+        </div>
+        <button class="btn-ai" id="btn-ai" onclick="runAI()">
+          <span>✨</span> استخراج البيانات بالذكاء الاصطناعي
+        </button>
+      </div>
+
+      <!-- AI Result preview -->
+      <div class="ai-result" id="ai-result">
+        <div class="ai-result-header">
+          <div class="ai-result-title">✅ تم استخراج البيانات — راجع وعدّل إن لزم</div>
+          <button onclick="clearAI()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem">مسح ✕</button>
+        </div>
+        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">
+          تم تعبئة النموذج أدناه تلقائياً. يمكنك تعديل أي بيان قبل الحفظ.
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual form -->
+    <div class="card">
+      <div class="card-title">📝 بيانات الزيارة</div>
+
+      <div class="fields-grid">
+
+        <div class="form-group">
+          <label class="form-label">👤 اسم العميل *</label>
+          <input class="form-input" id="f-client" placeholder="اسم الشركة أو العميل" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🔢 رقم الحساب</label>
+          <input class="form-input" id="f-account" placeholder="ACC-XXXX" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📦 المنتج / الخدمة *</label>
+          <input class="form-input" id="f-product" placeholder="اسم المنتج أو الخدمة" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📞 نوع الاجتماع *</label>
+          <select class="form-select" id="f-type">
+            <option value="">اختر النوع</option>
+            <option value="in_person">🏢 حضوري</option>
+            <option value="phone_call">📞 مكالمة هاتفية</option>
+            <option value="online">💻 أونلاين</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">🎯 سبب الزيارة *</label>
+          <input class="form-input" id="f-reason" placeholder="ما سبب هذه الزيارة؟" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📅 تاريخ ووقت الاجتماع</label>
+          <input type="datetime-local" class="form-input" id="f-datetime" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📆 الزيارة القادمة</label>
+          <input type="datetime-local" class="form-input" id="f-nextvisit" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">👔 حضور مدير الحساب</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="acct-mgr" value="true"> ✅ نعم</label>
+            <label class="radio-opt"><input type="radio" name="acct-mgr" value="false"> ❌ لا</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🏛️ حضور مدير الإدارة</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="admin-mgr" value="true"> ✅ نعم</label>
+            <label class="radio-opt"><input type="radio" name="admin-mgr" value="false"> ❌ لا</label>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">🏆 هدف الاجتماع</label>
+          <textarea class="form-textarea" id="f-objective" placeholder="ما هو الهدف الرئيسي من هذا الاجتماع؟"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">📝 ملاحظات إضافية</label>
+          <textarea class="form-textarea" id="f-notes" placeholder="أي ملاحظات أو معلومات إضافية..."></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">✔️ متابعات / Action Items</label>
+          <div id="followup-list" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem"></div>
+          <div style="display:flex;gap:0.5rem">
+            <input class="form-input" id="followup-input" placeholder="أضف متابعة..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addFollowup()}" />
+            <button onclick="addFollowup()" style="background:var(--gradient);border:none;border-radius:10px;padding:0.7rem 1rem;color:white;cursor:pointer;font-size:1rem">+</button>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="btn-submit" id="btn-submit" onclick="submitCheckin()">
+        💾 حفظ بيانات الزيارة
+      </button>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none">
+    <div class="card">
+      <div class="card-title">📅 سجل زياراتي الأخيرة</div>
+      <div class="history-list" id="history-list">
+        <div class="pulse-line" style="width:60%;margin-bottom:.5rem"></div>
+        <div class="pulse-line" style="width:80%"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Auth check ──────────────────────────────────────────────────────────────
+const userData = JSON.parse(sessionStorage.getItem('user') || 'null');
+if (!userData) window.location.href = '/';
+
+const empId   = userData?.username || '';
+const empName = userData?.name || '';
+
+document.getElementById('user-name').textContent   = empName;
+document.getElementById('user-avatar').textContent = empName.charAt(0);
+document.getElementById('date-badge').textContent  = new Date().toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// ── Tab switch ───────────────────────────────────────────────────────────────
+function showTab(tab) {
+  document.getElementById('tab-new').style.display     = tab === 'new'     ? 'block' : 'none';
+  document.getElementById('tab-history').style.display = tab === 'history' ? 'block' : 'none';
+  document.querySelectorAll('.nav-item').forEach((el, i) => {
+    el.classList.toggle('active', i === (tab === 'new' ? 0 : 1));
+  });
+  if(tab === 'history') loadHistory();
+}
+
+// ── AI Extract ───────────────────────────────────────────────────────────────
+let followups = [];
+
+async function runAI() {
+  const msg = document.getElementById('ai-input').value.trim();
+  if (!msg) return;
+  const btn = document.getElementById('btn-ai');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> جاري التحليل...';
+
+  try {
+    const res = await fetch('/api/extract', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({message: msg})
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error);
+    fillForm(json.data);
+    document.getElementById('ai-result').classList.add('show');
+    toast('✅ تم استخراج البيانات بنجاح!', true);
+  } catch(e) {
+    toast('⚠️ خطأ: ' + e.message, false);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>✨</span> استخراج البيانات بالذكاء الاصطناعي';
+}
+
+function fillForm(d) {
+  const v = (id, val) => { if(val) document.getElementById(id).value = val; };
+  v('f-client',    d.client_name);
+  v('f-account',   d.account_number);
+  v('f-product',   d.product);
+  v('f-reason',    d.visit_reason);
+  v('f-objective', d.meeting_objective);
+  v('f-notes',     d.notes);
+
+  if(d.meeting_type) document.getElementById('f-type').value = d.meeting_type;
+  if(d.meeting_datetime)  document.getElementById('f-datetime').value  = d.meeting_datetime?.slice(0,16);
+  if(d.next_visit_date)   document.getElementById('f-nextvisit').value = d.next_visit_date?.slice(0,16);
+
+  const setRadio = (name, val) => {
+    if(val === null || val === undefined) return;
+    const rb = document.querySelector(`input[name="${name}"][value="${val}"]`);
+    if(rb) rb.checked = true;
+  };
+  setRadio('acct-mgr',  d.account_manager_present);
+  setRadio('admin-mgr', d.admin_manager_present);
+
+  followups = Array.isArray(d.follow_up_actions) ? [...d.follow_up_actions] : [];
+  renderFollowups();
+}
+
+function clearAI() {
+  document.getElementById('ai-result').classList.remove('show');
+}
+
+// ── Followups ─────────────────────────────────────────────────────────────────
+function addFollowup() {
+  const inp = document.getElementById('followup-input');
+  const val = inp.value.trim();
+  if(!val) return;
+  followups.push(val);
+  inp.value = '';
+  renderFollowups();
+}
+function removeFollowup(i) { followups.splice(i,1); renderFollowups(); }
+function renderFollowups() {
+  const el = document.getElementById('followup-list');
+  el.innerHTML = followups.map((f,i) => `
+    <div style="display:flex;align-items:center;gap:0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.75rem">
+      <span style="flex:1;font-size:0.85rem">• ${f}</span>
+      <button onclick="removeFollowup(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:color .2s" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    </div>`).join('');
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function submitCheckin() {
+  const client = document.getElementById('f-client').value.trim();
+  if(!client) { toast('⚠️ اسم العميل مطلوب', false); return; }
+
+  const getRadio = name => {
+    const el = document.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value === 'true' : null;
+  };
+
+  const data = {
+    client_name:               client,
+    account_number:            document.getElementById('f-account').value.trim() || null,
+    product:                   document.getElementById('f-product').value.trim() || null,
+    visit_reason:              document.getElementById('f-reason').value.trim() || null,
+    meeting_type:              document.getElementById('f-type').value || null,
+    account_manager_present:   getRadio('acct-mgr'),
+    admin_manager_present:     getRadio('admin-mgr'),
+    meeting_datetime:          document.getElementById('f-datetime').value || null,
+    meeting_objective:         document.getElementById('f-objective').value.trim() || null,
+    next_visit_date:           document.getElementById('f-nextvisit').value || null,
+    notes:                     document.getElementById('f-notes').value.trim() || null,
+    follow_up_actions:         followups
+  };
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> جاري الحفظ...';
+
+  try {
+    const res = await fetch('/api/checkins', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ data, employee_id: empId, employee_name: empName, raw_message: document.getElementById('ai-input').value })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error);
+    toast('🎉 تم حفظ بيانات الزيارة بنجاح! رقم السجل: #' + json.id, true);
+    resetForm();
+  } catch(e) {
+    toast('⚠️ خطأ في الحفظ: ' + e.message, false);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 حفظ بيانات الزيارة';
+}
+
+function resetForm() {
+  ['f-client','f-account','f-product','f-reason','f-objective','f-notes','f-datetime','f-nextvisit','ai-input'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('f-type').value = '';
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  followups = []; renderFollowups();
+  document.getElementById('ai-result').classList.remove('show');
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+const typeMap = {
+  in_person:  ['🏢','حضوري','badge-green'],
+  phone_call: ['📞','مكالمة','badge-amber'],
+  online:     ['💻','أونلاين','badge-blue']
+};
+
+function fmtDt(dt) {
+  if(!dt) return null;
+  try {
+    return new Date(dt).toLocaleString('ar-SA', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch(e) { return dt.slice(0,16).replace('T',' '); }
+}
+
+function boolIcon(v) {
+  if(v===1||v===true) return '<span style="color:#34d399">✅ نعم</span>';
+  if(v===0||v===false) return '<span style="color:var(--muted)">❌ لا</span>';
+  return '<span style="color:var(--muted)">—</span>';
+}
+
+async function loadHistory() {
+  const el = document.getElementById('history-list');
+  el.innerHTML = ['70%','85%','60%'].map(w=>`<div class="pulse-line" style="width:${w};margin-bottom:.75rem"></div>`).join('');
+  const res = await fetch(`/api/checkins/me?employee_id=${empId}&limit=20`);
+  const { records } = await res.json();
+
+  if(!records.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">📭</div><p>لا توجد زيارات مسجلة بعد.<br><small>سجّل زيارتك الأولى من القائمة على اليمين.</small></p></div>';
+    return;
+  }
+
+  el.innerHTML = records.map((r,idx) => {
+    const [tIcon, tLabel, tCls] = typeMap[r.meeting_type] || ['➖','غير محدد','badge-gray'];
+    const recDate = r.created_at?.slice(0,10) || '';
+    const recTime = r.created_at?.slice(11,16) || '';
+
+    // follow-up actions
+    let actions = [];
+    try { actions = JSON.parse(r.follow_up_actions || '[]'); } catch(e) {}
+    const actionsHTML = actions.length
+      ? actions.map(a=>`<div class="hist-followup-item"><span style="color:var(--accent);flex-shrink:0">◆</span><span>${a}</span></div>`).join('')
+      : '';
+
+    // Detail rows — only show if value exists
+    const details = [
+      r.visit_reason   ? { icon:'🎯', label:'سبب الزيارة',    val: r.visit_reason,     full: true  } : null,
+      r.meeting_datetime ? { icon:'📅', label:'تاريخ الاجتماع', val: fmtDt(r.meeting_datetime), full: false } : null,
+      r.next_visit_date  ? { icon:'📆', label:'الزيارة القادمة',val: fmtDt(r.next_visit_date),   full: false } : null,
+      { icon:'👔', label:'مدير الحساب', val: boolIcon(r.account_manager_present), full: false, raw: true },
+      { icon:'🏛️', label:'مدير الإدارة', val: boolIcon(r.admin_manager_present),  full: false, raw: true },
+      r.meeting_objective ? { icon:'🏆', label:'هدف الاجتماع',  val: r.meeting_objective, full: true  } : null,
+      r.notes           ? { icon:'📝', label:'ملاحظات',        val: r.notes,             full: true  } : null,
+    ].filter(Boolean);
+
+    const detailsHTML = details.map(d => `
+      <div class="hist-detail ${d.full?'full':''}">
+        <span class="hist-detail-icon">${d.icon}</span>
+        <div>
+          <div class="hist-detail-label">${d.label}</div>
+          <div class="hist-detail-val">${d.raw ? d.val : `<span>${d.val}</span>`}</div>
+        </div>
+      </div>`).join('');
+
+    return `
+    <div class="hist-card" style="animation-delay:${idx*0.06}s">
+      <!-- Header -->
+      <div class="hist-header">
+        <div class="hist-client-wrap">
+          <div class="hist-client-icon">🏢</div>
+          <div>
+            <div class="hist-client">${r.client_name || '—'}</div>
+            <div class="hist-account">${r.account_number ? '🔢 ' + r.account_number : ''} ${r.product ? '&nbsp;•&nbsp; 📦 ' + r.product : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
+          <div class="hist-date-badge">📅 ${recDate} ${recTime ? '• ' + recTime : ''}</div>
+          <span class="badge ${tCls}">${tIcon} ${tLabel}</span>
+          <button class="btn-delete" onclick="deleteCheckin(${r.id}, this)" title="حذف هذه الزيارة">🗑️ حذف</button>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="hist-body">
+        <div class="hist-details">${detailsHTML}</div>
+
+        ${actionsHTML ? `
+        <div class="hist-followups">
+          <div class="hist-followups-title">✔️ متابعات / Action Items</div>
+          ${actionsHTML}
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, success=true) {
+  const el = document.getElementById('toast');
+  el.style.background = success ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+  el.style.borderColor = success ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)';
+  el.style.color = success ? '#34d399' : '#f87171';
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deleteCheckin(id, btn) {
+  // Show confirmation dialog
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <div class="confirm-icon">🗑️</div>
+      <div class="confirm-title">تأكيد الحذف</div>
+      <div class="confirm-sub">هل أنت متأكد من حذف هذا السجل؟<br>لا يمكن التراجع عن هذا الإجراء.</div>
+      <div class="confirm-actions">
+        <button class="btn-cancel" id="dlg-cancel">إلغاء</button>
+        <button class="btn-confirm-del" id="dlg-ok">🗑️ نعم، احذف</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const result = await new Promise(resolve => {
+    document.getElementById('dlg-ok').onclick     = () => { overlay.remove(); resolve(true); };
+    document.getElementById('dlg-cancel').onclick = () => { overlay.remove(); resolve(false); };
+    overlay.onclick = e => { if(e.target===overlay){ overlay.remove(); resolve(false); } };
+  });
+
+  if (!result) return;
+
+  try {
+    const res = await fetch(`/api/checkins/${id}`, {
+      method: 'DELETE',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ employee_id: empId, role: userData.role })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error);
+
+    // Animate removal
+    const card = btn.closest('.hist-card');
+    card.style.transition = 'opacity 0.3s, transform 0.3s, max-height 0.4s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(40px)';
+    card.style.maxHeight = card.offsetHeight + 'px';
+    setTimeout(() => { card.style.maxHeight = '0'; card.style.marginBottom = '0'; card.style.padding = '0'; }, 300);
+    setTimeout(() => card.remove(), 700);
+
+    toast('🗑️ تم حذف الزيارة بنجاح', true);
+  } catch(e) {
+    toast('⚠️ ' + e.message, false);
+  }
+}
+
+function logout() { sessionStorage.clear(); window.location.href = '/'; }
+</script>
+</body>
+</html>

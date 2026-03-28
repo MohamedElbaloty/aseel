@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الدخول — نظام Post Check-in الذكي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #060b18;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.08);
+  --border-active: rgba(99,102,241,0.6);
+  --accent: #6366f1;
+  --accent2: #8b5cf6;
+  --accent3: #3b82f6;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --success: #10b981;
+  --error: #ef4444;
+  --gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --glow: 0 0 40px rgba(99,102,241,0.3);
+}
+
+body {
+  font-family: 'Cairo', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Animated background */
+.bg-orbs {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: float 8s infinite ease-in-out;
+}
+.orb1 { width: 500px; height: 500px; background: #6366f1; top: -10%; left: -10%; animation-delay: 0s; }
+.orb2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -10%; right: -10%; animation-delay: -4s; }
+.orb3 { width: 300px; height: 300px; background: #3b82f6; top: 50%; left: 50%; animation-delay: -2s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.05); }
+}
+
+/* Grid lines */
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image: 
+    linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* Main card */
+.login-wrapper {
+  position: relative; z-index: 10;
+  width: 100%; max-width: 460px;
+  padding: 1.5rem;
+}
+
+.card {
+  background: rgba(15, 20, 40, 0.85);
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.5), var(--glow);
+  animation: slideUp 0.6s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Logo */
+.logo-wrap {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.logo-icon {
+  width: 72px; height: 72px;
+  background: var(--gradient);
+  border-radius: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+  margin-bottom: 1rem;
+  animation: iconPulse 3s infinite;
+}
+@keyframes iconPulse {
+  0%, 100% { box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
+  50% { box-shadow: 0 8px 50px rgba(99,102,241,0.7); }
+}
+
+.logo-wrap h1 {
+  font-size: 1.5rem; font-weight: 800;
+  background: var(--gradient);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo-wrap p { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+
+/* Role selector */
+.role-tabs {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.75rem; margin-bottom: 2rem;
+}
+.role-tab {
+  padding: 0.85rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.25s ease;
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.9rem; font-weight: 600;
+  color: var(--muted);
+}
+.role-tab .tab-icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+.role-tab:hover { border-color: var(--accent); color: var(--text); background: var(--surface-hover); }
+.role-tab.active {
+  border-color: var(--accent);
+  background: rgba(99,102,241,0.15);
+  color: var(--text);
+  box-shadow: 0 0 20px rgba(99,102,241,0.2);
+}
+
+/* Form */
+.form-group { margin-bottom: 1.25rem; }
+.form-label {
+  display: block; font-size: 0.85rem; font-weight: 600;
+  color: var(--muted); margin-bottom: 0.5rem;
+}
+.form-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  color: var(--text);
+  font-family: 'Cairo', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.form-input::placeholder { color: var(--muted); }
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+  background: rgba(99,102,241,0.05);
+}
+
+/* Password field */
+.pass-wrap { position: relative; }
+.pass-toggle {
+  position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: 1.1rem; transition: color 0.2s;
+}
+.pass-toggle:hover { color: var(--text); }
+
+/* Submit */
+.btn-login {
+  width: 100%;
+  background: var(--gradient);
+  border: none; border-radius: 14px;
+  padding: 1rem;
+  color: white;
+  font-family: 'Cairo', sans-serif;
+  font-size: 1rem; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative; overflow: hidden;
+  margin-top: 0.5rem;
+}
+.btn-login::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.1);
+  opacity: 0; transition: opacity 0.2s;
+}
+.btn-login:hover::after { opacity: 1; }
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.5); }
+.btn-login:active { transform: translateY(0); }
+.btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* Error */
+.error-msg {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: #f87171;
+  text-align: center;
+  margin-top: 1rem;
+  display: none;
+}
+.error-msg.show { display: block; animation: shake 0.4s ease; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+/* Demo hint */
+.demo-hint {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(99,102,241,0.06);
+  border: 1px solid rgba(99,102,241,0.15);
+  border-radius: 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.demo-hint strong { color: var(--accent2); }
+.demo-hint span { color: var(--text); }
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle; margin-left: 0.5rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Loading screen */
+.loading-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1rem;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.loading-screen.visible { opacity: 1; pointer-events: all; }
+.loading-logo {
+  width: 64px; height: 64px;
+  background: var(--gradient);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  animation: iconPulse 1.5s infinite;
+}
+.loading-text { color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-orbs">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-logo">📋</div>
+  <div class="spinner" style="border-top-color:#6366f1"></div>
+  <div class="loading-text">جاري تسجيل الدخول...</div>
+</div>
+
+<div class="login-wrapper">
+  <div class="card">
+
+    <div class="logo-wrap">
+      <div class="logo-icon">📋</div>
+      <h1>نظام Check-in الذكي</h1>
+      <p>AI Post Check-in System</p>
+    </div>
+
+    <div class="role-tabs" id="role-tabs">
+      <button class="role-tab active" data-role="employee" onclick="selectRole('employee', this)">
+        <span class="tab-icon">👤</span>
+        موظف
+      </button>
+      <button class="role-tab" data-role="admin" onclick="selectRole('admin', this)">
+        <span class="tab-icon">🏛️</span>
+        مدير
+      </button>
+    </div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">اسم المستخدم</label>
+        <input type="text" class="form-input" id="username" placeholder="أدخل اسم المستخدم" autocomplete="username" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <div class="pass-wrap">
+          <input type="password" class="form-input" id="password" placeholder="أدخل كلمة المرور" autocomplete="current-password" required />
+          <button type="button" class="pass-toggle" onclick="togglePass()">👁️</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="login-btn">
+        تسجيل الدخول
+      </button>
+
+      <div class="error-msg" id="error-msg"></div>
+    </form>
+
+    <div class="demo-hint">
+      🔑 <strong>بيانات تجريبية:</strong><br>
+      موظف: <span>emp001</span> / <span>pass123</span><br>
+      مدير: <span>admin</span> / <span>admin123</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let selectedRole = 'employee';
+
+  function selectRole(role, el) {
+    selectedRole = role;
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const hints = { employee: 'emp001', admin: 'admin' };
+    document.getElementById('username').value = hints[role] || '';
+  }
+
+  function togglePass() {
+    const inp = document.getElementById('password');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('error-msg');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    btn.disabled = true;
+    btn.innerHTML = 'جاري التحقق <span class="spinner"></span>';
+    errEl.classList.remove('show');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'خطأ في تسجيل الدخول');
+
+      // Save session
+      sessionStorage.setItem('user', JSON.stringify(data));
+
+      // Show loading then redirect
+      document.getElementById('loading-screen').classList.add('visible');
+      setTimeout(() => {
+        window.location.href = data.role === 'admin' ? '/admin.html' : '/employee.html';
+      }, 800);
+
+    } catch(err) {
+      errEl.textContent = err.message;
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.innerHTML = 'تسجيل الدخول';
+    }
+  }
+</script>
+</body>
+</html>

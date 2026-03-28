@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة المدير — نظام Check-in الذكي</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060b18; --surface: rgba(255,255,255,0.04);
+  --surface2: rgba(255,255,255,0.07); --border: rgba(255,255,255,0.08);
+  --accent: #6366f1; --accent2: #8b5cf6; --text: #f1f5f9; --muted: #64748b;
+  --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6;
+  --gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Background */
+.bg-grid { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+  background-size: 60px 60px; }
+.bg-orb { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.06; pointer-events: none; }
+.orb1 { width: 700px; height: 700px; background: #6366f1; top: -20%; right: -10%; }
+.orb2 { width: 500px; height: 500px; background: #3b82f6; bottom: -10%; left: -5%; }
+
+/* Sidebar */
+.sidebar {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 250px;
+  background: rgba(8,12,28,0.97); border-left: 1px solid var(--border);
+  backdrop-filter: blur(20px); display: flex; flex-direction: column;
+  z-index: 100; padding: 1.5rem 0;
+}
+.sidebar-logo { padding: 0 1.5rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
+.logo-icon { width: 44px; height: 44px; background: var(--gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 20px rgba(99,102,241,0.5); flex-shrink: 0; }
+.logo-text { font-size: 0.85rem; font-weight: 700; }
+.logo-text small { display: block; font-weight: 400; color: var(--muted); font-size: 0.72rem; }
+.sidebar-nav { flex: 1; padding: 1.25rem 0; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.5rem; cursor: pointer; transition: all 0.2s; font-size: 0.88rem; font-weight: 600; color: var(--muted); border-right: 3px solid transparent; }
+.nav-item:hover { color: var(--text); background: var(--surface); }
+.nav-item.active { color: var(--accent); border-right-color: var(--accent); background: rgba(99,102,241,0.08); }
+.nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+.sidebar-user { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
+.user-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
+.user-name { font-size: 0.85rem; font-weight: 700; }
+.user-role-badge { font-size: 0.7rem; color: var(--warning); }
+.logout-btn { margin-right: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; transition: color 0.2s; }
+.logout-btn:hover { color: var(--danger); }
+
+/* Main */
+.main { margin-right: 250px; padding: 2rem; position: relative; z-index: 1; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.page-title { font-size: 1.6rem; font-weight: 800; }
+.page-subtitle { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+.topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+.stat-card {
+  background: rgba(12,18,38,0.85); backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: 18px; padding: 1.4rem;
+  display: flex; align-items: center; gap: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
+}
+.stat-card::after { content: ''; position: absolute; inset: 0; background: var(--gradient); opacity: 0; transition: opacity 0.3s; }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(99,102,241,0.2); }
+.stat-icon { width: 52px; height: 52px; background: rgba(99,102,241,0.12); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; border: 1px solid rgba(99,102,241,0.2); }
+.stat-val { font-size: 2rem; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+.stat-change { font-size: 0.72rem; color: var(--success); margin-top: 0.15rem; }
+
+/* Chart */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin-bottom: 2rem; }
+.card { background: rgba(12,18,38,0.85); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.card-title { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+
+/* Donut chart */
+.donut-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 1rem; }
+.donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut-circle { fill: none; stroke-width: 16; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
+.donut-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+.donut-label .val { font-size: 1.4rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.donut-label .sub { font-size: 0.65rem; color: var(--muted); }
+.donut-legend { display: flex; flex-direction: column; gap: 0.5rem; }
+.legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Bar chart */
+.bar-chart { display: flex; align-items: flex-end; gap: 0.5rem; height: 100px; padding-top: 0.5rem; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.bar { width: 100%; border-radius: 6px 6px 0 0; background: var(--gradient); min-height: 4px; transition: height 1s ease; position: relative; }
+.bar:hover::after { content: attr(data-val); position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: var(--surface2); padding: 2px 6px; border-radius: 6px; font-size: 0.7rem; white-space: nowrap; }
+.bar-label { font-size: 0.65rem; color: var(--muted); text-align: center; }
+
+/* Filters */
+.filters-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
+.filter-input, .filter-select {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 0.65rem 1rem; color: var(--text); font-family: 'Cairo', sans-serif;
+  font-size: 0.85rem; outline: none; transition: border-color 0.2s;
+}
+.filter-input { flex: 1; min-width: 220px; }
+.filter-input::placeholder { color: var(--muted); }
+.filter-input:focus, .filter-select:focus { border-color: var(--accent); }
+.filter-select option { background: #111827; }
+.btn-export {
+  background: var(--gradient); border: none; border-radius: 10px;
+  padding: 0.65rem 1.2rem; color: white; font-family: 'Cairo', sans-serif;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem;
+}
+.btn-export:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.4); }
+
+/* Table */
+.table-wrapper { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead { background: linear-gradient(135deg, rgba(15,20,50,0.9), rgba(10,14,35,0.9)); }
+th { padding: 1rem 1.25rem; text-align: right; font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+td { padding: 0.9rem 1.25rem; font-size: 0.83rem; border-top: 1px solid var(--border); vertical-align: middle; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+tr:hover td { background: rgba(99,102,241,0.04); }
+tbody tr { animation: fadeInRow 0.25s ease forwards; opacity: 0; }
+@keyframes fadeInRow { to { opacity: 1; } }
+tbody tr:nth-child(1){animation-delay:.03s} tbody tr:nth-child(2){animation-delay:.06s}
+tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-delay:.12s}
+
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+.b-green  { background: rgba(16,185,129,0.1);  color: #34d399; border: 1px solid rgba(16,185,129,0.25); }
+.b-amber  { background: rgba(245,158,11,0.1);  color: #fbbf24; border: 1px solid rgba(245,158,11,0.25); }
+.b-blue   { background: rgba(59,130,246,0.1);  color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+.b-indigo { background: rgba(99,102,241,0.1);  color: #818cf8; border: 1px solid rgba(99,102,241,0.25); }
+.b-gray   { background: rgba(100,116,139,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+/* Pagination */
+.pagination { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0 0; }
+.pagination-info { font-size: 0.8rem; color: var(--muted); }
+.pagination-btns { display: flex; gap: 0.4rem; }
+.pg-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.8rem; color: var(--muted); cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 0.8rem; transition: all 0.2s; }
+.pg-btn:hover, .pg-btn.active { background: var(--gradient); color: white; border-color: transparent; }
+
+/* Pulse skeleton */
+.pulse { height: 12px; background: var(--surface2); border-radius: 99px; animation: pulse 1.5s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+/* Spinner */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Employee performance list */
+.emp-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.emp-row { display: flex; align-items: center; gap: 0.75rem; }
+.emp-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+.emp-name { font-size: 0.85rem; font-weight: 600; flex: 1; }
+.emp-count { font-size: 0.82rem; color: var(--muted); }
+.emp-bar { flex: 2; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.emp-bar-fill { height: 100%; background: var(--gradient); border-radius: 99px; transition: width 1s ease; }
+
+/* Empty state */
+.empty { text-align: center; padding: 3rem; color: var(--muted); }
+.empty .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+/* Responsive */
+@media(max-width:1100px){ .charts-row { grid-template-columns: 1fr 1fr; } }
+@media(max-width:900px) { .charts-row { grid-template-columns: 1fr; } .main { margin-right: 0; padding: 1.25rem; } .sidebar { display: none; } }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-text">لوحة المدير<small>Post Check-in Admin</small></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">🏠</span>نظرة عامة</div>
+    <div class="nav-item" onclick="showPage('records',this)"><span class="nav-icon">📋</span>سجلات الزيارات</div>
+    <div class="nav-item" onclick="showPage('employees',this)"><span class="nav-icon">👥</span>الموظفون</div>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar">م</div>
+    <div>
+      <div class="user-name" id="admin-name">مدير النظام</div>
+      <div class="user-role-badge">⭐ مدير</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">🚪</button>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- DASHBOARD PAGE -->
+  <div id="page-dashboard">
+    <div class="topbar">
+      <div><div class="page-title">نظرة عامة 📊</div><div class="page-subtitle">إحصائيات نظام Post Check-in لحظة بلحظة</div></div>
+      <div class="topbar-actions">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.5rem 1rem;font-size:0.8rem;color:var(--muted)" id="last-updated"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-icon">📊</div><div><div class="pulse" style="width:60px;margin-bottom:.3rem"></div><div class="stat-label">إجمالي الزيارات</div></div></div>
+      <div class="stat-card"><div class="stat-icon">📅</div><div><div class="pulse" style="width:40px;margin-bottom:.3rem"></div><div class="stat-label">زيارات اليوم</div></div></div>
+      <div class="stat-card"><div class="stat-icon">📆</div><div><div class="pulse" style="width:40px;margin-bottom:.3rem"></div><div class="stat-label">هذا الأسبوع</div></div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div><div class="pulse" style="width:40px;margin-bottom:.3rem"></div><div class="stat-label">موظفون نشطون</div></div></div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+      <!-- Donut -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📞 توزيع نوع الاجتماع</div></div>
+        <div class="donut-wrap" id="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 120 120" id="donut-svg">
+            <circle class="donut-circle" cx="60" cy="60" r="52" stroke="#1e293b" stroke-dasharray="327 0"/>
+            <circle class="donut-circle" id="d-inperson" cx="60" cy="60" r="52" stroke="#10b981" stroke-dasharray="0 327"/>
+            <circle class="donut-circle" id="d-phone" cx="60" cy="60" r="52" stroke="#f59e0b" stroke-dasharray="0 327"/>
+            <circle class="donut-circle" id="d-online" cx="60" cy="60" r="52" stroke="#3b82f6" stroke-dasharray="0 327"/>
+          </svg>
+          <div class="donut-label"><div class="val" id="donut-total">0</div><div class="sub">إجمالي</div></div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div><span>🏢 حضوري</span><span style="margin-right:auto;font-weight:700" id="leg-inperson">0</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><span>📞 مكالمة</span><span style="margin-right:auto;font-weight:700" id="leg-phone">0</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div><span>💻 أونلاين</span><span style="margin-right:auto;font-weight:700" id="leg-online">0</span></div>
+        </div>
+      </div>
+
+      <!-- Weekly bar chart -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📈 آخر 7 أيام</div></div>
+        <div class="bar-chart" id="weekly-chart">
+          <div style="color:var(--muted);font-size:0.8rem;margin:auto">جاري التحميل...</div>
+        </div>
+        <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--muted);text-align:center">الأيام الأخيرة (آخر سجل في أقصى اليمين)</div>
+      </div>
+
+      <!-- Employee performance -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏆 أداء الموظفين</div></div>
+        <div class="emp-list" id="emp-perf-list">
+          <div class="pulse" style="width:100%"></div><div class="pulse" style="width:80%;margin-top:.5rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORDS PAGE -->
+  <div id="page-records" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">سجلات الزيارات 📋</div><div class="page-subtitle">جميع سجلات Post Check-in</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 جميع السجلات <span style="color:var(--muted);font-weight:400;font-size:0.8rem" id="rec-count"></span></div>
+        <button class="btn-export" onclick="exportCSV()">⬇️ تصدير CSV</button>
+      </div>
+
+      <div class="filters-row">
+        <input class="filter-input" id="f-search" placeholder="🔍 ابحث بالعميل، الموظف، المنتج..." oninput="applyFilters()" />
+        <select class="filter-select" id="f-type" onchange="applyFilters()">
+          <option value="">كل أنواع الاجتماعات</option>
+          <option value="in_person">🏢 حضوري</option>
+          <option value="phone_call">📞 مكالمة</option>
+          <option value="online">💻 أونلاين</option>
+        </select>
+        <select class="filter-select" id="f-emp" onchange="applyFilters()">
+          <option value="">كل الموظفين</option>
+        </select>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>الموظف</th>
+              <th>العميل</th>
+              <th>رقم الحساب</th>
+              <th>المنتج</th>
+              <th>نوع الاجتماع</th>
+              <th>سبب الزيارة</th>
+              <th>م. الحساب</th>
+              <th>م. الإدارة</th>
+              <th>هدف الاجتماع</th>
+              <th>الزيارة القادمة</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody">
+            <tr><td colspan="12"><div class="empty"><div class="icon">🔄</div><p>جاري التحميل...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div class="pagination-info" id="pag-info"></div>
+        <div class="pagination-btns" id="pag-btns"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEES PAGE -->
+  <div id="page-employees" style="display:none">
+    <div class="topbar">
+      <div><div class="page-title">الموظفون 👥</div><div class="page-subtitle">تفاصيل أداء كل موظف</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">👥 قائمة الموظفين</div></div>
+      <div id="emp-table-wrap">
+        <div class="pulse" style="width:100%;margin-bottom:.75rem"></div>
+        <div class="pulse" style="width:80%;margin-bottom:.75rem"></div>
+        <div class="pulse" style="width:90%"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// Auth
+const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+if (!user || user.role !== 'admin') window.location.href = '/';
+document.getElementById('admin-name').textContent = user?.name || 'مدير';
+
+let allRecords = [], filtered = [];
+let currentPage = 1;
+const PER_PAGE = 20;
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function showPage(id, el) {
+  ['dashboard','records','employees'].forEach(p => document.getElementById('page-'+p).style.display = 'none');
+  document.getElementById('page-'+id).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='records')   loadRecords();
+  if(id==='employees') loadEmployeePage();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const [statsRes, recRes] = await Promise.all([
+    fetch('/api/stats'), fetch('/api/checkins?limit=500')
+  ]);
+  const stats = await statsRes.json();
+  const { records } = await recRes.json();
+  allRecords = records;
+
+  // Stats cards
+  document.getElementById('stats-grid').innerHTML = [
+    { icon:'📊', val: stats.total,   label:'إجمالي الزيارات',   change: `+${stats.monthly} هذا الشهر` },
+    { icon:'📅', val: stats.today,   label:'زيارات اليوم',       change: '' },
+    { icon:'📆', val: stats.weekly,  label:'هذا الأسبوع',        change: '' },
+    { icon:'👥', val: stats.employees,label:'موظفون نشطون',      change: '' },
+  ].map(s => `<div class="stat-card">
+    <div class="stat-icon">${s.icon}</div>
+    <div>
+      <div class="stat-val">${s.val}</div>
+      <div class="stat-label">${s.label}</div>
+      ${s.change ? `<div class="stat-change">${s.change}</div>` : ''}
+    </div>
+  </div>`).join('');
+
+  // Donut
+  const t = stats.total || 1;
+  const C = 2 * Math.PI * 52; // circumference
+  const ip = Math.round((stats.by_type.in_person/t)*C);
+  const ph = Math.round((stats.by_type.phone_call/t)*C);
+  const on = Math.round((stats.by_type.online/t)*C);
+  let offset = 0;
+  [['d-inperson', ip, '#10b981'],['d-phone', ph, '#f59e0b'],['d-online', on, '#3b82f6']].forEach(([id, len, col]) => {
+    const el = document.getElementById(id);
+    el.style.strokeDasharray = `${len} ${C-len}`;
+    el.style.strokeDashoffset = -offset;
+    el.style.stroke = col;
+    offset += len;
+  });
+  document.getElementById('donut-total').textContent  = stats.total;
+  document.getElementById('leg-inperson').textContent = stats.by_type.in_person;
+  document.getElementById('leg-phone').textContent    = stats.by_type.phone_call;
+  document.getElementById('leg-online').textContent   = stats.by_type.online;
+
+  // Weekly bar chart
+  const days = {};
+  for(let i=6;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days[d.toISOString().slice(0,10)] = 0;
+  }
+  records.forEach(r => { const d = (r.created_at||'').slice(0,10); if(days[d]!==undefined) days[d]++; });
+  const maxVal = Math.max(...Object.values(days), 1);
+  const dayNames = { Mon:'اثنين', Tue:'ثلاثاء', Wed:'أربعاء', Thu:'خميس', Fri:'جمعة', Sat:'سبت', Sun:'أحد' };
+  document.getElementById('weekly-chart').innerHTML = Object.entries(days).map(([date, val]) => {
+    const pct = Math.round((val/maxVal)*90) + 10;
+    const dn = new Date(date).toLocaleDateString('en',{weekday:'short'});
+    return `<div class="bar-col">
+      <div class="bar" style="height:${pct}%" data-val="${val}"></div>
+      <div class="bar-label">${dayNames[dn]||dn}</div>
+    </div>`;
+  }).join('');
+
+  // Employee performance
+  const empCount = {};
+  records.forEach(r => {
+    const k = r.employee_name||r.employee_id||'?';
+    empCount[k] = (empCount[k]||0)+1;
+  });
+  const sorted = Object.entries(empCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxEmp = sorted[0]?.[1] || 1;
+  document.getElementById('emp-perf-list').innerHTML = sorted.length ? sorted.map(([name,cnt]) => `
+    <div class="emp-row">
+      <div class="emp-avatar">${name.charAt(0)}</div>
+      <div class="emp-name">${name}</div>
+      <div class="emp-count">${cnt}</div>
+      <div class="emp-bar"><div class="emp-bar-fill" style="width:${Math.round((cnt/maxEmp)*100)}%"></div></div>
+    </div>`).join('') : '<div class="empty"><div class="icon">👥</div><p>لا يوجد بيانات</p></div>';
+
+  document.getElementById('last-updated').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar');
+}
+
+// ── Records ───────────────────────────────────────────────────────────────────
+const typeMap = {
+  in_person:  ['🏢 حضوري','b-green'],
+  phone_call: ['📞 مكالمة','b-amber'],
+  online:     ['💻 أونلاين','b-blue'],
+};
+
+async function loadRecords() {
+  if(!allRecords.length) {
+    const res = await fetch('/api/checkins?limit=500');
+    const { records } = await res.json();
+    allRecords = records;
+  }
+  // Fill employee filter
+  const empSel = document.getElementById('f-emp');
+  const emps = [...new Set(allRecords.map(r => r.employee_name||r.employee_id).filter(Boolean))].sort();
+  if(empSel.options.length === 1) {
+    emps.forEach(e => { const o = new Option(e,e); empSel.add(o); });
+  }
+  filtered = [...allRecords];
+  renderTable();
+}
+
+function applyFilters() {
+  const s = document.getElementById('f-search').value.toLowerCase();
+  const t = document.getElementById('f-type').value;
+  const e = document.getElementById('f-emp').value;
+  filtered = allRecords.filter(r => {
+    const matchS = !s || [r.client_name,r.employee_name,r.product,r.visit_reason].some(v => (v||'').toLowerCase().includes(s));
+    const matchT = !t || r.meeting_type === t;
+    const matchE = !e || (r.employee_name||r.employee_id) === e;
+    return matchS && matchT && matchE;
+  });
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable() {
+  const start = (currentPage-1)*PER_PAGE;
+  const page  = filtered.slice(start, start+PER_PAGE);
+  const tbody = document.getElementById('records-tbody');
+  document.getElementById('rec-count').textContent = `(${filtered.length} سجل)`;
+
+  if(!page.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><div class="icon">📭</div><p>لا توجد سجلات</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = page.map((r,i) => {
+    const [tLabel,tCls] = typeMap[r.meeting_type] || ['➖','b-gray'];
+    const bool = v => v===1 ? '<span style="color:#34d399">✅</span>' : v===0 ? '<span style="color:var(--muted)">❌</span>' : '–';
+    return `<tr>
+      <td style="color:var(--muted)">${start+i+1}</td>
+      <td style="color:var(--muted)">${(r.created_at||'').slice(0,10)}</td>
+      <td><strong>${r.employee_name||'–'}</strong></td>
+      <td><strong>${r.client_name||'–'}</strong></td>
+      <td style="color:var(--muted)">${r.account_number||'–'}</td>
+      <td>${r.product||'–'}</td>
+      <td><span class="badge ${tCls}">${tLabel}</span></td>
+      <td title="${r.visit_reason||''}">${r.visit_reason||'–'}</td>
+      <td style="text-align:center">${bool(r.account_manager_present)}</td>
+      <td style="text-align:center">${bool(r.admin_manager_present)}</td>
+      <td title="${r.meeting_objective||''}" style="max-width:150px">${(r.meeting_objective||'–').slice(0,50)}${(r.meeting_objective||'').length>50?'...':''}</td>
+      <td style="color:var(--muted)">${(r.next_visit_date||'').slice(0,10)||'–'}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length/PER_PAGE);
+  document.getElementById('pag-info').textContent = `صفحة ${currentPage} من ${totalPages} (${filtered.length} سجل)`;
+  const btns = document.getElementById('pag-btns');
+  btns.innerHTML = '';
+  if(currentPage>1) { const b=document.createElement('button'); b.className='pg-btn'; b.textContent='→'; b.onclick=()=>{currentPage--;renderTable();}; btns.appendChild(b); }
+  for(let p=Math.max(1,currentPage-2);p<=Math.min(totalPages,currentPage+2);p++) {
+    const b=document.createElement('button'); b.className='pg-btn'+(p===currentPage?' active':'');
+    b.textContent=p; const pp=p; b.onclick=()=>{currentPage=pp;renderTable();}; btns.appendChild(b);
+  }
+  if(currentPage<totalPages) { const b=document.createElement('button'); b.className='pg-btn'; b.textContent='←'; b.onclick=()=>{currentPage++;renderTable();}; btns.appendChild(b); }
+}
+
+// ── Employees page ────────────────────────────────────────────────────────────
+async function loadEmployeePage() {
+  if(!allRecords.length) {
+    const res = await fetch('/api/checkins?limit=500');
+    const { records } = await res.json();
+    allRecords = records;
+  }
+  const empData = {};
+  allRecords.forEach(r => {
+    const k = r.employee_id;
+    if(!empData[k]) empData[k] = { name: r.employee_name||k, total:0, today:0, inperson:0, phone:0, online:0 };
+    empData[k].total++;
+    if((r.created_at||'').slice(0,10) === new Date().toISOString().slice(0,10)) empData[k].today++;
+    if(r.meeting_type === 'in_person')  empData[k].inperson++;
+    if(r.meeting_type === 'phone_call') empData[k].phone++;
+    if(r.meeting_type === 'online')     empData[k].online++;
+  });
+  const rows = Object.values(empData).sort((a,b)=>b.total-a.total);
+  document.getElementById('emp-table-wrap').innerHTML = rows.length ? `
+    <div class="table-wrapper">
+    <table>
+      <thead><tr><th>#</th><th>اسم الموظف</th><th>الإجمالي</th><th>اليوم</th><th>حضوري</th><th>مكالمات</th><th>أونلاين</th></tr></thead>
+      <tbody>${rows.map((e,i) => `<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td><div style="display:flex;align-items:center;gap:.6rem">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700">${e.name.charAt(0)}</div>
+          <strong>${e.name}</strong></div></td>
+        <td><span class="badge b-indigo">📊 ${e.total}</span></td>
+        <td><span class="badge b-blue">📅 ${e.today}</span></td>
+        <td><span class="badge b-green">🏢 ${e.inperson}</span></td>
+        <td><span class="badge b-amber">📞 ${e.phone}</span></td>
+        <td><span class="badge b-blue">💻 ${e.online}</span></td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : '<div class="empty"><div class="icon">👥</div><p>لا يوجد بيانات موظفين</p></div>';
+}
+
+// ── Export CSV ─────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['التاريخ','الموظف','العميل','رقم الحساب','المنتج','نوع الاجتماع','سبب الزيارة','مدير الحساب','مدير الإدارة','هدف الاجتماع','الزيارة القادمة','ملاحظات'];
+  const rows = filtered.map(r => [
+    r.created_at,r.employee_name,r.client_name,r.account_number,r.product,
+    r.meeting_type,r.visit_reason,
+    r.account_manager_present===1?'نعم':'لا',
+    r.admin_manager_present===1?'نعم':'لا',
+    r.meeting_objective,r.next_visit_date,r.notes
+  ].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = '\uFEFF' + [headers.join(','),...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `checkins_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function logout() { sessionStorage.clear(); window.location.href = '/'; }
+
+// Init
+loadDashboard();
+setInterval(loadDashboard, 60000); // auto-refresh every minute
+</script>
+</body>
+</html>
