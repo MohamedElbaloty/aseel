@@ -256,17 +256,38 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .hist-card {
   background: rgba(12,18,40,0.85);
   border: 1px solid var(--border); border-radius: 18px;
-  overflow: hidden; transition: all 0.25s;
+  overflow: hidden; transition: all 0.3s;
   animation: fadeIn 0.35s ease;
 }
 .hist-card:hover { border-color: rgba(99,102,241,0.35); box-shadow: 0 8px 30px rgba(99,102,241,0.1); }
 
-/* Card header strip */
 .hist-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 1rem 1.25rem; gap: 1rem;
   border-bottom: 1px solid var(--border);
   background: rgba(255,255,255,0.02);
+  cursor: pointer;
+}
+
+.hist-body { 
+  padding: 1.1rem 1.25rem;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease, padding 0.3s ease;
+  overflow: hidden;
+}
+
+/* Collapsible Mobile */
+@media (max-width: 900px) {
+  .hist-card.collapsed .hist-body {
+    max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
+  }
+  .hist-card.collapsed .hist-header { border-bottom-color: transparent; }
+  .hist-card.collapsed .chevron { transform: rotate(-90deg); }
+}
+
+.chevron {
+  font-size: 0.9rem; color: var(--muted);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 .hist-client-wrap { display: flex; align-items: center; gap: 0.75rem; }
 .hist-client-icon {
@@ -680,6 +701,12 @@ function toggleSidebar() {
   s.classList.toggle('show');
 }
 
+function toggleCard(header) {
+  if (window.innerWidth > 900) return;
+  const card = header.closest('.hist-card');
+  card.classList.toggle('collapsed');
+}
+
 function showTab(tabId) {
   const tabs = ['new', 'history'];
   tabs.forEach(t => {
@@ -915,9 +942,9 @@ async function loadHistory() {
       </div>`).join('');
 
     return `
-    <div class="hist-card" style="animation-delay:${idx*0.06}s">
+    <div class="hist-card ${window.innerWidth <= 900 ? 'collapsed' : ''}" style="animation-delay:${idx*0.06}s">
       <!-- Header -->
-      <div class="hist-header">
+      <div class="hist-header" onclick="toggleCard(this)">
         <div class="hist-client-wrap">
           <div class="hist-client-icon">🏢</div>
           <div>
@@ -925,15 +952,24 @@ async function loadHistory() {
             <div class="hist-account">${r.account_number ? '🔢 ' + r.account_number : ''} ${r.product ? '&nbsp;•&nbsp; 📦 ' + r.product : ''}</div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
-          <div class="hist-date-badge">📅 ${recDate} ${recTime ? '• ' + recTime : ''}</div>
-          <span class="badge ${tCls}">${tIcon} ${tLabel}</span>
-          <button class="btn-delete" onclick="deleteCheckin(${r.id}, this)" title="حذف هذه الزيارة">🗑️ حذف</button>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
+            <div class="hist-date-badge">📅 ${recDate}</div>
+            <span class="badge ${tCls}">${tIcon} ${tLabel}</span>
+          </div>
+          <span class="chevron">▼</span>
         </div>
       </div>
 
+      <!-- Action Button (Outside header-click area if needed, but let's keep delete inside body for now or top right) -->
+      
       <!-- Body -->
       <div class="hist-body">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem">
+           <div class="hist-date-badge" style="background:var(--surface2)">🕒 ${recTime || '--:--'}</div>
+           <button class="btn-delete" onclick="event.stopPropagation(); deleteCheckin(${r.id}, this)" title="حذف هذه الزيارة">🗑️ حذف</button>
+        </div>
+        
         <div class="hist-details">${detailsHTML}</div>
 
         ${actionsHTML ? `
