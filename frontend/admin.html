@@ -479,6 +479,7 @@ function showPage(pageId) {
   document.getElementById('m-nav-emps').classList.toggle('active', pageId === 'employees');
 
   if (pageId === 'employees') loadEmployeePage();
+  if (pageId === 'records') loadRecords();
   
   // Close menu on mobile after selection
   const s = document.querySelector('.sidebar');
@@ -584,8 +585,7 @@ async function loadRecords() {
   if(empSel.options.length === 1) {
     emps.forEach(e => { const o = new Option(e,e); empSel.add(o); });
   }
-  filtered = [...allRecords];
-  renderTable();
+  applyFilters();
 }
 
 function applyFilters() {
