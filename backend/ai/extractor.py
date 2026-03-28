@@ -7,9 +7,7 @@ def get_client():
     global _client
     if _client is None:
         from openai import OpenAI
-        key = os.getenv('OPENAI_API_KEY')
-        if not key:
-            raise ValueError('OPENAI_API_KEY غير معيّن في ملف .env')
+        key = os.getenv('OPENAI_API_KEY', '')
         _client = OpenAI(api_key=key)
     return _client
 
