@@ -278,13 +278,15 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   overflow: hidden;
 }
 
+.hist-card.collapsed .hist-body {
+  max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
+}
+.hist-card.collapsed .hist-header { border-bottom-color: transparent; }
+.hist-card.collapsed .chevron { transform: rotate(-90deg); }
+
 /* Collapsible Mobile */
 @media (max-width: 900px) {
-  .hist-card.collapsed .hist-body {
-    max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;
-  }
-  .hist-card.collapsed .hist-header { border-bottom-color: transparent; }
-  .hist-card.collapsed .chevron { transform: rotate(-90deg); }
+  /* Mobile specific adjustments if needed */
 }
 
 .chevron {
