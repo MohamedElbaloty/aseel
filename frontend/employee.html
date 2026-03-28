@@ -439,6 +439,36 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   cursor: pointer; font-family: 'Cairo', sans-serif; transition: all 0.2s;
 }
 .btn-confirm-del:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
+
+/* AI Badge */
+.ai-badge {
+  margin-right: auto;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+  color: #a5b4fc;
+  border: 1px solid rgba(99,102,241,0.3);
+  padding: 4px 12px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 0 15px rgba(99,102,241,0.1);
+  animation: badge-glow 3s infinite ease-in-out;
+}
+.ai-badge::before {
+  content: '';
+  width: 5px; height: 5px;
+  background: #6366f1;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #6366f1;
+}
+@keyframes badge-glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.3); }
+  50% { box-shadow: 0 0 20px rgba(99,102,241,0.3); border-color: rgba(99,102,241,0.6); }
+}
 </style>
 </head>
 <body>
@@ -498,7 +528,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
     <div class="card" style="margin-bottom:1.5rem">
       <div class="card-title">
         🧠 الإدخال الذكي بالذكاء الاصطناعي
-        <span style="margin-right:auto;font-size:0.72rem;font-weight:400;color:var(--muted);background:rgba(99,102,241,0.1);padding:3px 10px;border-radius:99px">GPT-4o</span>
+        <span class="ai-badge">GPT-4o</span>
       </div>
 
       <div class="ai-input-area">
