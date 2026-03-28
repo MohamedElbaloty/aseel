@@ -4,3 +4,4 @@ openai==1.35.3
 python-dotenv==1.0.1
 google-auth==2.29.0
 google-api-python-client==2.126.0
+psycopg2-binary==2.9.9
