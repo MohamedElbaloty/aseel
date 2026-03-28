@@ -4,8 +4,10 @@ Database layer — automatically uses PostgreSQL on Railway, SQLite locally.
 import json, os, sqlite3
 from datetime import datetime
 
-DATABASE_URL = os.getenv('DATABASE_URL')  # Set by Railway when PostgreSQL is added
-USE_PG = bool(DATABASE_URL)
+_PG_FALLBACK = "postgresql://postgres:ZKpYAzKAeQARWiXJsLsZmmCQuPwOumbS@gondola.proxy.rlwy.net:35819/railway"
+DATABASE_URL = os.getenv('DATABASE_URL') or _PG_FALLBACK
+USE_PG = True  # Always use PostgreSQL
+
 
 # ── PostgreSQL helpers ────────────────────────────────────────────────────────
 def get_pg():
