@@ -160,9 +160,47 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
 .empty { text-align: center; padding: 3rem; color: var(--muted); }
 .empty .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
 
-/* Responsive */
-@media(max-width:1100px){ .charts-row { grid-template-columns: 1fr 1fr; } }
-@media(max-width:900px) { .charts-row { grid-template-columns: 1fr; } .main { margin-right: 0; padding: 1.25rem; } .sidebar { display: none; } }
+/* Responsive — mobile first */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(100%); opacity: 0; pointer-events: none; }
+  .sidebar.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .main { margin-right: 0; padding: 1rem 1rem 5rem; }
+  .charts-row { grid-template-columns: 1fr; gap: 1rem; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .page-title { font-size: 1.25rem; }
+  .card { padding: 1.25rem; }
+  .filters-row { flex-direction: column; }
+  .filter-input { width: 100%; }
+}
+
+/* Mobile Bottom Navigation (Admin) */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(8,12,28,0.97); border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  flex-direction: row; align-items: stretch; height: 70px;
+}
+@media (max-width: 900px) { .mobile-nav { display: flex; } }
+.mob-nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 0.2rem; padding: 0.4rem;
+  cursor: pointer; transition: all 0.2s; color: var(--muted);
+  font-size: 0.65rem; font-weight: 600; border: none; background: none;
+  font-family: 'Cairo', sans-serif;
+}
+.mob-nav-item i { font-size: 1.4rem; font-style: normal; }
+.mob-nav-item.active { color: var(--accent); }
+
+/* Menu toggle for mobile */
+.menu-toggle {
+  display: none;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; width: 42px; height: 42px;
+  align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer;
+}
+@media (max-width: 900px) { .menu-toggle { display: flex; } }
+
 
 /* Admin delete */
 .btn-del-row {
@@ -242,7 +280,13 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
   <!-- DASHBOARD PAGE -->
   <div id="page-dashboard">
     <div class="topbar">
-      <div><div class="page-title">نظرة عامة 📊</div><div class="page-subtitle">إحصائيات نظام Post Check-in لحظة بلحظة</div></div>
+      <div style="display:flex; align-items:center; gap:0.75rem">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div>
+          <div class="page-title">نظرة عامة 📊</div>
+          <div class="page-subtitle">إحصائيات نظام Post Check-in لحظة بلحظة</div>
+        </div>
+      </div>
       <div class="topbar-actions">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.5rem 1rem;font-size:0.8rem;color:var(--muted)" id="last-updated"></div>
       </div>
@@ -299,7 +343,13 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
   <!-- RECORDS PAGE -->
   <div id="page-records" style="display:none">
     <div class="topbar">
-      <div><div class="page-title">سجلات الزيارات 📋</div><div class="page-subtitle">جميع سجلات Post Check-in</div></div>
+      <div style="display:flex; align-items:center; gap:0.75rem">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div>
+          <div class="page-title">سجلات الزيارات 📋</div>
+          <div class="page-subtitle">جميع سجلات Post Check-in</div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -358,7 +408,13 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
   <!-- EMPLOYEES PAGE -->
   <div id="page-employees" style="display:none">
     <div class="topbar">
-      <div><div class="page-title">الموظفون 👥</div><div class="page-subtitle">تفاصيل أداء كل موظف</div></div>
+      <div style="display:flex; align-items:center; gap:0.75rem">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div>
+          <div class="page-title">الموظفون 👥</div>
+          <div class="page-subtitle">إحصائيات وتقارير الموظفين</div>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-header">
@@ -375,6 +431,21 @@ tbody tr:nth-child(3){animation-delay:.09s} tbody tr:nth-child(4){animation-dela
 
 </main>
 
+<div class="mobile-nav">
+  <button class="mob-nav-item active" id="m-nav-dash" onclick="showPage('dashboard')">
+    <i>📊</i><span>نظرة عامة</span>
+  </button>
+  <button class="mob-nav-item" id="m-nav-records" onclick="showPage('records')">
+    <i>📋</i><span>السجلات</span>
+  </button>
+  <button class="mob-nav-item" id="m-nav-emps" onclick="showPage('employees')">
+    <i>👤</i><span>الموظفون</span>
+  </button>
+  <button class="mob-nav-item" onclick="logout()">
+    <i>🚪</i><span>خروج</span>
+  </button>
+</div>
+
 <script>
 // Auth
 const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -386,13 +457,32 @@ let currentPage = 1;
 const PER_PAGE = 20;
 
 // ── Navigation ────────────────────────────────────────────────────────────────
-function showPage(id, el) {
-  ['dashboard','records','employees'].forEach(p => document.getElementById('page-'+p).style.display = 'none');
-  document.getElementById('page-'+id).style.display = 'block';
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-  if(id==='records')   loadRecords();
-  if(id==='employees') loadEmployeePage();
+function toggleSidebar() {
+  const s = document.querySelector('.sidebar');
+  s.classList.toggle('show');
+}
+
+function showPage(pageId) {
+  const pages = ['dashboard', 'records', 'employees'];
+  pages.forEach(p => {
+    document.getElementById(`page-${p}`).style.display = p === pageId ? 'block' : 'none';
+  });
+
+  // Sidebar highlight
+  document.querySelectorAll('.nav-item').forEach((el, idx) => {
+    el.classList.toggle('active', (pageId === 'dashboard' && idx === 0) || (pageId === 'records' && idx === 1) || (pageId === 'employees' && idx === 2));
+  });
+
+  // Mobile nav highlight
+  document.getElementById('m-nav-dash').classList.toggle('active', pageId === 'dashboard');
+  document.getElementById('m-nav-records').classList.toggle('active', pageId === 'records');
+  document.getElementById('m-nav-emps').classList.toggle('active', pageId === 'employees');
+
+  if (pageId === 'employees') loadEmployeePage();
+  
+  // Close menu on mobile after selection
+  const s = document.querySelector('.sidebar');
+  if (s.classList.contains('show')) s.classList.remove('show');
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────

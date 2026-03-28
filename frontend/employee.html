@@ -86,7 +86,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   font-size: 1rem; font-weight: 700;
 }
 .user-info { flex: 1; min-width: 0; }
-.user-name { font-size: 0.85rem; font-weight: 700; truncate: ellipsis; overflow: hidden; white-space: nowrap; }
+.user-name { font-size: 0.85rem; font-weight: 700; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
 .user-role { font-size: 0.72rem; color: var(--accent); }
 .logout-btn {
   background: none; border: none; color: var(--muted);
@@ -356,13 +356,49 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .empty { text-align: center; padding: 3rem; color: var(--muted); }
 .empty .icon { font-size: 3rem; margin-bottom: 0.75rem; }
 
-/* Responsive */
+/* Responsive — mobile first */
 @media (max-width: 900px) {
-  .sidebar { transform: translateX(240px); }
-  .main { margin-right: 0; padding: 1.25rem; }
+  .sidebar { transform: translateX(100%); opacity: 0; pointer-events: none; }
+  .sidebar.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  .main { margin-right: 0; padding: 1rem 1rem 5rem; }
   .fields-grid { grid-template-columns: 1fr; }
   .fields-grid .full { grid-column: 1; }
+  .hist-details { grid-template-columns: 1fr; }
+  .hist-detail.full { grid-column: 1; }
+  .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .page-title { font-size: 1.25rem; }
+  .content-tabs { flex-wrap: wrap; }
+  .ctab { font-size: 0.8rem; padding: 0.6rem 0.5rem; }
 }
+
+/* Mobile Bottom Navigation */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(8,12,28,0.97); border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  flex-direction: row; align-items: stretch; height: 70px;
+}
+@media (max-width: 900px) { .mobile-nav { display: flex; } }
+.mob-nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 0.2rem; padding: 0.4rem;
+  cursor: pointer; transition: all 0.2s; color: var(--muted);
+  font-size: 0.65rem; font-weight: 600; border: none; background: none;
+  font-family: 'Cairo', sans-serif;
+}
+.mob-nav-item i { font-size: 1.4rem; font-style: normal; }
+.mob-nav-item.active { color: var(--accent); }
+
+/* Menu toggle for mobile */
+.menu-toggle {
+  display: none;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); border-radius: 10px; width: 42px; height: 42px;
+  align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer;
+}
+@media (max-width: 900px) { .menu-toggle { display: flex; } .date-badge { display: none; } }
+
 
 /* Delete button */
 .btn-delete {
@@ -442,12 +478,18 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 <!-- Main -->
 <main class="main">
   <div class="topbar">
-    <div>
-      <div class="page-title" id="page-title">تسجيل زيارة جديدة</div>
-      <div class="page-subtitle" id="page-subtitle">أدخل تفاصيل اجتماعك وسيقوم الذكاء الاصطناعي بتعبئة النموذج تلقائياً</div>
+    <div style="display:flex; align-items:center; gap:0.75rem">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="page-title" id="page-title">تسجيل زيارة جديدة</div>
+        <div class="page-subtitle" id="page-subtitle">أدخل تفاصيل اجتماعك وسيقوم الذكاء الاصطناعي بتعبئة النموذج تلقائياً</div>
+      </div>
     </div>
     <div class="date-badge" id="date-badge"></div>
   </div>
+
+  </div>
+
 
   <!-- NEW CHECKIN TAB -->
   <div id="tab-new">
@@ -585,10 +627,55 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 </main>
 
+<div class="mobile-nav">
+  <button class="mob-nav-item active" id="m-nav-new" onclick="showTab('new')">
+    <i>➕</i><span>تسجيل</span>
+  </button>
+  <button class="mob-nav-item" id="m-nav-history" onclick="showTab('history')">
+    <i>📋</i><span>زياراتي</span>
+  </button>
+  <button class="mob-nav-item" onclick="logout()">
+    <i>🚪</i><span>خروج</span>
+  </button>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
+function toggleSidebar() {
+  const s = document.querySelector('.sidebar');
+  s.classList.toggle('show');
+}
+
+function showTab(tabId) {
+  const tabs = ['new', 'history'];
+  tabs.forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tabId ? 'block' : 'none';
+  });
+  
+  // Update titles
+  const title = tabId === 'new' ? 'تسجيل زيارة جديدة' : 'سجل زياراتي';
+  const subtitle = tabId === 'new' ? 'أدخل تفاصيل اجتماعك وسيقوم الذكاء الاصطناعي بتعبئة النموذج تلقائياً' : 'تاريخ الزيارات والمتابعات التي قمت بها';
+  if(document.getElementById('page-title')) document.getElementById('page-title').textContent = title;
+  if(document.getElementById('page-subtitle')) document.getElementById('page-subtitle').textContent = subtitle;
+
+  // Sidebar highlight
+  document.querySelectorAll('.nav-item').forEach((el, idx) => {
+    el.classList.toggle('active', (tabId === 'new' && idx === 0) || (tabId === 'history' && idx === 1));
+  });
+
+  // Mobile nav highlight
+  if(document.getElementById('m-nav-new')) document.getElementById('m-nav-new').classList.toggle('active', tabId === 'new');
+  if(document.getElementById('m-nav-history')) document.getElementById('m-nav-history').classList.toggle('active', tabId === 'history');
+
+  if (tabId === 'history') loadHistory();
+  
+  // Close menu on mobile after selection
+  const s = document.querySelector('.sidebar');
+  if (s.classList.contains('show')) s.classList.remove('show');
+}
+
 // ── Auth check ──────────────────────────────────────────────────────────────
 const userData = JSON.parse(sessionStorage.getItem('user') || 'null');
 if (!userData) window.location.href = '/';
@@ -599,16 +686,6 @@ const empName = userData?.name || '';
 document.getElementById('user-name').textContent   = empName;
 document.getElementById('user-avatar').textContent = empName.charAt(0);
 document.getElementById('date-badge').textContent  = new Date().toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-// ── Tab switch ───────────────────────────────────────────────────────────────
-function showTab(tab) {
-  document.getElementById('tab-new').style.display     = tab === 'new'     ? 'block' : 'none';
-  document.getElementById('tab-history').style.display = tab === 'history' ? 'block' : 'none';
-  document.querySelectorAll('.nav-item').forEach((el, i) => {
-    el.classList.toggle('active', i === (tab === 'new' ? 0 : 1));
-  });
-  if(tab === 'history') loadHistory();
-}
 
 // ── AI Extract ───────────────────────────────────────────────────────────────
 let followups = [];
