@@ -1160,11 +1160,17 @@ function boolIcon(v) {
   return '<span style="color:var(--muted)">—</span>';
 }
 
+let myVisits = []; // stores all worldwide company DB visits
+
 async function loadHistory() {
   const el = document.getElementById('history-list');
   el.innerHTML = ['70%','85%','60%'].map(w=>`<div class="pulse-line" style="width:${w};margin-bottom:.75rem"></div>`).join('');
-  const res = await fetch(`/api/checkins/me?employee_id=${empId}&limit=20`);
+  
+  // They explicitly wanted ALL visits to be in the history and matched locally from it!
+  const res = await fetch(`/api/checkins?limit=300`);
   const { records } = await res.json();
+  myVisits = records || [];
+
 
   if(!records.length) {
     el.innerHTML = '<div class="empty"><div class="icon">📭</div><p>لا توجد زيارات مسجلة بعد.<br><small>سجّل زيارتك الأولى من القائمة على اليمين.</small></p></div>';
@@ -1387,54 +1393,67 @@ function onStakeholderSelect() {
 async function fetchPreviousVisit() {
   const clientInputDisplay = document.getElementById('f-client-search').value.trim();
   const clientHidden = document.getElementById('f-client').value;
-  const client = clientHidden || clientInputDisplay;
-  const stakeholder = document.getElementById('f-stakeholder-name').value.trim();
+  const clientName = (clientHidden || clientInputDisplay).toLowerCase();
+  const stakeholder = document.getElementById('f-stakeholder-name').value.trim().toLowerCase();
   
-  if (!client) return;
+  if (!clientName || myVisits.length === 0) return;
   
-  try {
-    const url = `/api/checkins/latest?employee_id=${empId}&client_name=${encodeURIComponent(client)}` + (stakeholder ? `&stakeholder_name=${encodeURIComponent(stakeholder)}` : '');
-    const res = await fetch(url);
-    const d = await res.json();
-    if (d && d.client_name) {
-      toast('🪄 جاري جلب تفاصيل الزيارة السابقة لملء الحقول التلقائية...', true);
-      
-      const v = (id, val) => { const el = document.getElementById(id); if (el && val && !el.value) el.value = val; };
-      
-      // Only Pre-fill if fields are empty or not touched
-      v('f-product', d.product);
-      
-      const setRadio = (name, val) => {
-        if(val === null || val === undefined) return;
-        const currentChecked = document.querySelector(`input[name="${name}"]:checked`);
-        if (!currentChecked) {
-          const rb = document.querySelector(`input[name="${name}"][value="${val}"]`);
-          if(rb) rb.checked = true;
+  // Find the exact latest visit based on the loaded history
+  let oldVisit = null;
+  for (let i = 0; i < myVisits.length; i++) {
+     let v = myVisits[i];
+     if (v.client_name && v.client_name.toLowerCase().includes(clientName)) {
+        if (stakeholder) {
+           if (v.stakeholder_name && v.stakeholder_name.toLowerCase().includes(stakeholder)) {
+              oldVisit = v;
+              break; // Found the perfect match
+           }
+        } else {
+           oldVisit = v;
+           break; // Found the client match
         }
-      };
-      
-      setRadio('f-approach', d.checkin_approach);
-      setRadio('f-type', d.meeting_type);
-      setRadio('f-mpr', d.associated_mpr);
-      setRadio('f-cs-dir', d.cs_dir_attended);
-      setRadio('f-mpm', d.mpm_attended);
-      setRadio('f-hesham', d.hesham_attended);
-      setRadio('f-renewal', d.renewal_acct_mgr_attended);
-      
-      // Let's also restore Objectives if no objectives checked yet
-      let parsedObjs = [];
-      try { parsedObjs = typeof d.objectives_list === 'string' ? JSON.parse(d.objectives_list) : (d.objectives_list || []); } catch(e){}
-      
-      if (Array.isArray(parsedObjs) && parsedObjs.length > 0) {
-        const anyChecked = document.querySelector('.obj-chk:checked');
-        if (!anyChecked) {
-          document.querySelectorAll('.obj-chk').forEach(chk => {
-            if (parsedObjs.includes(chk.value)) chk.checked = true;
-          });
-        }
+     }
+  }
+
+  if (oldVisit) {
+    const d = oldVisit;
+    toast('🪄 جاري تعبئة الحقول تلقائياً بناءً على السجل السابق...', true);
+    
+    const v = (id, val) => { const el = document.getElementById(id); if (el && val && !el.value) el.value = val; };
+    
+    // Only Pre-fill if fields are empty or not touched
+    v('f-product', d.product);
+    
+    const setRadio = (name, val) => {
+      if(val === null || val === undefined) return;
+      const currentChecked = document.querySelector(`input[name="${name}"]:checked`);
+      if (!currentChecked) {
+        const rb = document.querySelector(`input[name="${name}"][value="${val}"]`);
+        if(rb) rb.checked = true;
+      }
+    };
+    
+    setRadio('f-approach', d.checkin_approach);
+    setRadio('f-type', d.meeting_type);
+    setRadio('f-mpr', d.associated_mpr);
+    setRadio('f-cs-dir', d.cs_dir_attended);
+    setRadio('f-mpm', d.mpm_attended);
+    setRadio('f-hesham', d.hesham_attended);
+    setRadio('f-renewal', d.renewal_acct_mgr_attended);
+    
+    // Let's also restore Objectives if no objectives checked yet
+    let parsedObjs = [];
+    try { parsedObjs = typeof d.objectives_list === 'string' ? JSON.parse(d.objectives_list) : (d.objectives_list || []); } catch(e){}
+    
+    if (Array.isArray(parsedObjs) && parsedObjs.length > 0) {
+      const anyChecked = document.querySelector('.obj-chk:checked');
+      if (!anyChecked) {
+        document.querySelectorAll('.obj-chk').forEach(chk => {
+          if (parsedObjs.includes(chk.value)) chk.checked = true;
+        });
       }
     }
-  } catch(e) { console.error('Error fetching old visit:', e); }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
