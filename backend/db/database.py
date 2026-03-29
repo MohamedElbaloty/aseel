@@ -188,12 +188,20 @@ def get_latest_checkin(emp_id, client_name, stakeholder_name=None):
     initialize_db()
     
     # We remove employee_id=%s so it pulls the latest visit for this client COMPANY-WIDE!
-    SQL = 'SELECT * FROM checkins WHERE client_name=%s'
-    vals = [client_name]
+    if USE_PG:
+        SQL = "SELECT * FROM checkins WHERE client_name ILIKE %s"
+        vals = [f"%{client_name}%"]
+    else:
+        SQL = "SELECT * FROM checkins WHERE client_name LIKE ?"
+        vals = [f"%{client_name}%"]
     
     if stakeholder_name:
-        SQL += ' AND stakeholder_name=%s'
-        vals.append(stakeholder_name)
+        if USE_PG:
+            SQL += " AND stakeholder_name ILIKE %s"
+            vals.append(f"%{stakeholder_name}%")
+        else:
+            SQL += " AND stakeholder_name LIKE ?"
+            vals.append(f"%{stakeholder_name}%")
         
     SQL += ' ORDER BY created_at DESC LIMIT 1'
     
