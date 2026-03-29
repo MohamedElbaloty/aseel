@@ -236,8 +236,9 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 }
 .fields-grid .full { grid-column: 1 / -1; }
 
-.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-.form-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.form-group { display: flex; flex-direction: column; gap: 0.6rem; }
+.form-label { font-size: 0.85rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
+.form-label::before { content: '•'; color: var(--accent); font-size: 1.2rem; line-height: 1; }
 .form-input, .form-select, .form-textarea {
   background: var(--surface);
   border: 1.5px solid var(--border);
@@ -254,18 +255,33 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 /* Radio group */
 .radio-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .radio-opt {
-  display: flex; align-items: center; gap: 0.4rem;
-  padding: 0.5rem 0.9rem;
-  border: 1.5px solid var(--border); border-radius: 8px;
-  cursor: pointer; font-size: 0.82rem; color: var(--muted);
-  transition: all 0.2s;
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  cursor: pointer; font-size: 0.85rem; color: var(--muted);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface);
+  user-select: none;
 }
 .radio-opt input { display: none; }
 .radio-opt:has(input:checked) {
-  border-color: var(--accent); color: var(--text);
-  background: rgba(99,102,241,0.12);
+  border-color: var(--accent); color: white;
+  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.05));
+  box-shadow: 0 4px 15px rgba(99,102,241,0.15);
+  font-weight: 600;
 }
-.radio-opt:hover { border-color: var(--accent); color: var(--text); }
+.radio-opt:hover { border-color: rgba(99,102,241,0.5); color: var(--text); transform: translateY(-1px); }
+
+/* Grid for objectives */
+.objectives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+@media (max-width: 600px) {
+  .objectives-grid { grid-template-columns: 1fr; }
+}
 
 /* Submit */
 .btn-submit {
@@ -700,22 +716,22 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         </div>
 
         <div class="form-group full">
-          <label class="form-label">What's the objective(s) of Check-In? *</label>
-          <div class="radio-group" style="flex-direction:column; align-items:flex-start; gap:0.5rem">
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="PoC Delivery"> PoC Delivery</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Kick-Off Meeting"> Kick-Off Meeting</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Onboarding & Certification"> Onboarding & Certification</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Re-Onboarding & Certification"> Re-Onboarding & Certification</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Drive Feature/Service Adoption"> Drive Feature/Service Adoption</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Introduce non-adopted Feature(s)"> Introduce non-adopted Feature(s)</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Validating Product Idea"> Validating Product Idea</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Product Update Announcement"> Product Update Announcement & Walk-through</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Facilitating Meetings for T2"> Facilitating & Leading Meetings for T2 team</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="New Need Discussion"> New Need Discussion</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Feedback Collection"> Feedback Collection</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Handling Customer Dissatisfaction"> Handling Customer Dissatisfaction</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Stakeholder Relationship Management"> Stakeholder Relationship Management</label>
-            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Signing Customer Success Story"> Signing Customer Success Story</label>
+          <label class="form-label" style="color:var(--accent); font-size: 0.95rem; margin-bottom: 0.5rem">🎯 What's the objective(s) of Check-In? *</label>
+          <div class="objectives-grid">
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="PoC Delivery"> 📦 PoC Delivery</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Kick-Off Meeting"> 🚀 Kick-Off Meeting</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Onboarding & Certification"> 🎓 Onboarding & Certification</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Re-Onboarding & Certification"> 🔄 Re-Onboarding & Certification</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Drive Feature/Service Adoption"> 📈 Drive Feature/Service Adoption</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Introduce non-adopted Feature(s)"> ✨ Introduce non-adopted Feature(s)</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Validating Product Idea"> 💡 Validating Product Idea</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Product Update Announcement"> 📢 Product Update Announcement</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Facilitating Meetings for T2"> 🤝 Facilitating Meetings for T2</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="New Need Discussion"> 💭 New Need Discussion</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Feedback Collection"> 📝 Feedback Collection</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Handling Customer Dissatisfaction"> ⚠️ Handling Dissatisfaction</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Stakeholder Relationship Management"> 👑 Stakeholder Management</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Signing Customer Success Story"> 📝 Success Story Signing</label>
           </div>
         </div>
 
@@ -1118,6 +1134,10 @@ async function submitCheckin() {
     const json = await res.json();
     if(!res.ok) throw new Error(json.error);
     toast('🎉 تم حفظ بيانات الزيارة بنجاح! رقم السجل: #' + json.id, true);
+    
+    // Immediately reload history so the new visit goes into the history array and the "سجل زياراتي" UI
+    await loadHistory();
+    
     resetForm();
   } catch(e) {
     toast('⚠️ خطأ في الحفظ: ' + e.message, false);
@@ -1166,18 +1186,21 @@ async function loadHistory() {
   const el = document.getElementById('history-list');
   el.innerHTML = ['70%','85%','60%'].map(w=>`<div class="pulse-line" style="width:${w};margin-bottom:.75rem"></div>`).join('');
   
-  // They explicitly wanted ALL visits to be in the history and matched locally from it!
-  const res = await fetch(`/api/checkins?limit=300`);
+  // They explicitly wanted ALL visits to be in the history and matched locally from it, no cache to ensure fresh data
+  const res = await fetch(`/api/checkins?limit=2000`, { cache: 'no-store' });
   const { records } = await res.json();
   myVisits = records || [];
 
 
-  if(!records.length) {
-    el.innerHTML = '<div class="empty"><div class="icon">📭</div><p>لا توجد زيارات مسجلة بعد.<br><small>سجّل زيارتك الأولى من القائمة على اليمين.</small></p></div>';
+  // Only display THIS employee's visits in THEIR history list
+  const myOwnRecords = myVisits.filter(v => v.employee_id === empId || v.employee_name === empName);
+
+  if(!myOwnRecords.length) {
+    el.innerHTML = '<div class="empty"><div class="icon">📭</div><p>لا توجد زيارات مسجلة لك بعد.<br><small>سجّل زيارتك الأولى من القائمة على اليمين.</small></p></div>';
     return;
   }
 
-  el.innerHTML = records.map((r,idx) => {
+  el.innerHTML = myOwnRecords.map((r,idx) => {
     const [tIcon, tLabel, tCls] = typeMap[r.meeting_type] || ['➖','غير محدد','badge-gray'];
     const recDate = r.created_at?.slice(0,10) || '';
     const recTime = r.created_at?.slice(11,16) || '';
@@ -1230,7 +1253,7 @@ async function loadHistory() {
       </div>`).join('');
 
     return `
-    <div class="hist-card ${window.innerWidth <= 900 ? 'collapsed' : ''}" style="animation-delay:${idx*0.06}s">
+    <div class="hist-card collapsed" style="animation-delay:${idx*0.06}s">
       <!-- Header -->
       <div class="hist-header" onclick="toggleCard(this)">
         <div class="hist-client-wrap">
