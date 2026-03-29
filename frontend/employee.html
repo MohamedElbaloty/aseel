@@ -1139,9 +1139,12 @@ function resetForm() {
 
 // ── History ───────────────────────────────────────────────────────────────────
 const typeMap = {
-  in_person:  ['🏢','حضوري','badge-green'],
-  phone_call: ['📞','مكالمة','badge-amber'],
-  online:     ['💻','أونلاين','badge-blue']
+  "in_person":     ['🏢','حضوري','badge-green'],
+  "phone_call":    ['📞','مكالمة','badge-amber'],
+  "online":        ['💻','أونلاين','badge-blue'],
+  "On-Site Visit": ['🏢','On-Site','badge-green'],
+  "On-Line Meeting":['💻','On-Line','badge-blue'],
+  "Phone Call":    ['📞','Phone','badge-amber']
 };
 
 function fmtDt(dt) {
@@ -1181,14 +1184,34 @@ async function loadHistory() {
       : '';
 
     // Detail rows — only show if value exists
+    let objs = [];
+    try { objs = JSON.parse(r.objectives_list || '[]'); } catch(e) {}
+    
+    // Fallback to old datetimes if new ones don't exist
+    const cDate = r.checkin_date || (r.meeting_datetime ? r.meeting_datetime.slice(0,10) : null);
+    const cTime = r.checkin_start_time ? `${r.checkin_start_time} - ${r.checkin_end_time || ''}` : null;
+    
     const details = [
-      r.visit_reason   ? { icon:'🎯', label:'سبب الزيارة',    val: r.visit_reason,     full: true  } : null,
-      r.meeting_datetime ? { icon:'📅', label:'تاريخ الاجتماع', val: fmtDt(r.meeting_datetime), full: false } : null,
+      r.stakeholder_name ? { icon:'👤', label:'الشخص', val: r.stakeholder_name, full: true } : null,
+      r.checkin_approach ? { icon:'🔄', label:'نوع (Approach)', val: r.checkin_approach, full: false } : null,
+      cDate ? { icon:'📅', label:'تاريخ الاجتماع', val: cDate, full: false } : null,
+      cTime ? { icon:'⏱️', label:'وقت الاجتماع', val: cTime, full: false } : null,
+      r.associated_mpr === 1 || r.associated_mpr === true ? { icon:'📌', label:'مرتبط بـ MPR', val: boolIcon(true), full: false, raw: true } : null,
+      
+      objs.length ? { icon:'🎯', label:'أهداف رئيسية', val: objs.join(', '), full: true } : null,
+      r.meeting_objective ? { icon:'🏆', label:'توضيح الأهداف',  val: r.meeting_objective, full: true  } : null,
+      
+      { icon:'👔', label:'CS Director', val: boolIcon(r.cs_dir_attended), full: false, raw: true },
+      { icon:'🏛️', label:'MPM', val: boolIcon(r.mpm_attended),  full: false, raw: true },
+      { icon:'📱', label:'Hesham (Msegat)', val: boolIcon(r.hesham_attended),  full: false, raw: true },
+      { icon:'💳', label:'Renewal Mgr', val: boolIcon(r.renewal_acct_mgr_attended),  full: false, raw: true },
+      
+      r.sentiment ? { icon:'😊', label:'انطباع العميل', val: r.sentiment, full: false } : null,
+      { icon:'📑', label:'تم عمل MoM', val: boolIcon(r.mom_generated),  full: false, raw: true },
+      { icon:'📤', label:'تمت المشاركة', val: boolIcon(r.mom_shared),  full: false, raw: true },
+      
+      r.notes           ? { icon:'📝', label:'ملاحظات Feedback', val: r.notes,             full: true  } : null,
       r.next_visit_date  ? { icon:'📆', label:'الزيارة القادمة',val: fmtDt(r.next_visit_date),   full: false } : null,
-      { icon:'👔', label:'مدير الحساب', val: boolIcon(r.account_manager_present), full: false, raw: true },
-      { icon:'🏛️', label:'مدير الإدارة', val: boolIcon(r.admin_manager_present),  full: false, raw: true },
-      r.meeting_objective ? { icon:'🏆', label:'هدف الاجتماع',  val: r.meeting_objective, full: true  } : null,
-      r.notes           ? { icon:'📝', label:'ملاحظات',        val: r.notes,             full: true  } : null,
     ].filter(Boolean);
 
     const detailsHTML = details.map(d => `
