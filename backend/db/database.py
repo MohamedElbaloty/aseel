@@ -187,8 +187,9 @@ def get_all_checkins(limit=200):
 def get_latest_checkin(emp_id, client_name, stakeholder_name=None):
     initialize_db()
     
-    SQL = 'SELECT * FROM checkins WHERE employee_id=%s AND client_name=%s'
-    vals = [emp_id, client_name]
+    # We remove employee_id=%s so it pulls the latest visit for this client COMPANY-WIDE!
+    SQL = 'SELECT * FROM checkins WHERE client_name=%s'
+    vals = [client_name]
     
     if stakeholder_name:
         SQL += ' AND stakeholder_name=%s'
