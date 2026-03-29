@@ -1142,28 +1142,12 @@ async function loadClients() {
     allClients = await res.json();
     const datalist = document.getElementById('clients-list');
     if (datalist) {
-      datalist.innerHTML = allClients.map(c => `<option value="${c.farabi_account} - ${c.client_name}"></option>`).join('');
+      datalist.innerHTML = allClients.map(c => `<option value="${c.farabi_account} - ${c.client_name}" data-account="${c.farabi_account}" data-name="${c.client_name}"></option>`).join('');
     }
   } catch(e) { console.error('Error loading clients:', e); }
 }
 
-function onClientSelect() {
-  const input = document.getElementById('f-client-search').value;
-  const farabiArr = input.split(' - ');
-  const possibleFarabi = farabiArr[0].trim();
-  const foundClient = allClients.find(c => c.farabi_account === possibleFarabi || `${c.farabi_account} - ${c.client_name}` === input);
-  
-  if (foundClient) {
-    document.getElementById('f-client').value = foundClient.client_name;
-    document.getElementById('f-account').value = foundClient.farabi_account;
-    loadStakeholders(foundClient.farabi_account);
-    fetchPreviousVisit();
-  } else {
-    document.getElementById('f-client').value = '';
-    document.getElementById('f-account').value = '';
-    fetchPreviousVisit();
-  }
-}
+// ... function removed ...
 
 async function loadStakeholders(farabi) {
   try {
@@ -1197,10 +1181,16 @@ function onStakeholderSelect() {
 async function fetchPreviousVisit() {
   const clientInputDisplay = document.getElementById('f-client-search').value.trim();
   const clientHidden = document.getElementById('f-client').value;
-  const clientName = (clientHidden || clientInputDisplay).toLowerCase();
+  
+  // Clean name: remove "123 - " prefix if present in the display input
+  let clientName = (clientHidden || clientInputDisplay).toLowerCase();
+  if (clientName.includes(' - ')) {
+    clientName = clientName.split(' - ')[1].trim();
+  }
+  
   const stakeholder = document.getElementById('f-stakeholder-name').value.trim().toLowerCase();
   
-  if (!clientName || myVisits.length === 0) return;
+  if (!clientName || !myVisits || myVisits.length === 0) return;
   
   // Find the exact latest visit based on the loaded history
   let oldVisit = null;
@@ -1262,6 +1252,7 @@ async function fetchPreviousVisit() {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadClients();
+  loadHistory();
 });
 
 function logout() { sessionStorage.clear(); window.location.href = '/'; }
