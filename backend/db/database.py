@@ -84,7 +84,21 @@ def initialize_db():
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def b(v):
-    return 1 if v is True else (0 if v is False else None)
+    """Convert Python bool to the right type for the active DB.
+    PostgreSQL has native BOOLEAN columns → keep True/False.
+    SQLite stores booleans as INTEGER → convert to 1/0.
+    """
+    if v is True:
+        return True if USE_PG else 1
+    if v is False:
+        return False if USE_PG else 0
+    # Handles string 'true'/'false' coming from the frontend radio buttons
+    if isinstance(v, str):
+        if v.lower() == 'true':
+            return True if USE_PG else 1
+        if v.lower() == 'false':
+            return False if USE_PG else 0
+    return None
 
 def row_to_dict(r):
     if isinstance(r, dict):
@@ -128,16 +142,16 @@ def save_checkin(data, emp_id, emp_name, raw=''):
         'checkin_start_time': data.get('checkin_start_time'),
         'checkin_end_time': data.get('checkin_end_time'),
         'checkin_approach': data.get('checkin_approach'),
-        'associated_mpr': data.get('associated_mpr'),
+        'associated_mpr': b(data.get('associated_mpr')),
         'objectives_list': objectives,
-        'cs_dir_attended': data.get('cs_dir_attended'),
-        'mpm_attended': data.get('mpm_attended'),
-        'hesham_attended': data.get('hesham_attended'),
-        'renewal_acct_mgr_attended': data.get('renewal_acct_mgr_attended'),
+        'cs_dir_attended': b(data.get('cs_dir_attended')),
+        'mpm_attended': b(data.get('mpm_attended')),
+        'hesham_attended': b(data.get('hesham_attended')),
+        'renewal_acct_mgr_attended': b(data.get('renewal_acct_mgr_attended')),
         'sentiment': data.get('sentiment'),
-        'mom_generated': data.get('mom_generated'),
-        'mom_shared': data.get('mom_shared'),
-        'feedback_shared': data.get('feedback_shared'),
+        'mom_generated': b(data.get('mom_generated')),
+        'mom_shared': b(data.get('mom_shared')),
+        'feedback_shared': b(data.get('feedback_shared')),
     }
     
     cols = list(fields.keys())
@@ -290,21 +304,31 @@ def get_employees():
             return [dict(r) for r in c.execute(SQL).fetchall()]
 
 # ── Delete ────────────────────────────────────────────────────────────────────
-def delete_checkin(record_id, employee_id=None, role='employee'):
+def delete_checkin(record_id, employee_id=None, role='employee', employee_name=None):
     initialize_db()
     if role == 'admin':
-        SQL = 'DELETE FROM checkins WHERE id=%s'; args = (record_id,)
+        SQL = 'DELETE FROM checkins WHERE id=%s'
+        args = (record_id,)
     else:
-        SQL = 'DELETE FROM checkins WHERE id=%s AND employee_id=%s'; args = (record_id, employee_id)
+        # Match by ID or Name to handle potential data inconsistencies
+        SQL = 'DELETE FROM checkins WHERE id=%s AND (employee_id=%s OR employee_name=%s)'
+        args = (record_id, employee_id, employee_name)
+    
     if USE_PG:
         conn = get_pg()
         try:
-            with conn.cursor() as cur: cur.execute(SQL, args); affected = cur.rowcount
-            conn.commit(); return affected > 0
-        finally: conn.close()
+            with conn.cursor() as cur:
+                cur.execute(SQL, args)
+                affected = cur.rowcount
+            conn.commit()
+            return affected > 0
+        finally:
+            conn.close()
     else:
         with get_sqlite() as c:
-            affected = c.execute(SQL.replace('%s','?'), args).rowcount; c.commit(); return affected > 0
+            affected = c.execute(SQL.replace('%s','?'), args).rowcount
+            c.commit()
+            return affected > 0
 
 def delete_employee_visits(emp_id):
     """Delete all visits of one employee."""

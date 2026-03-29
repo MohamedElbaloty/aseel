@@ -147,88 +147,6 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   border-bottom: 1px solid var(--border);
 }
 
-/* AI Input Section */
-.ai-input-area {
-  position: relative;
-}
-.ai-textarea {
-  width: 100%; min-height: 140px;
-  background: rgba(99,102,241,0.05);
-  border: 2px solid rgba(99,102,241,0.2);
-  border-radius: 16px;
-  padding: 1rem 1.25rem;
-  color: var(--text); font-family: 'Cairo', sans-serif;
-  font-size: 0.95rem; line-height: 1.8;
-  outline: none; resize: vertical;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.ai-textarea::placeholder { color: var(--muted); }
-.ai-textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-}
-
-.ai-hint {
-  margin-top: 0.75rem;
-  font-size: 0.78rem; color: var(--muted);
-  display: flex; align-items: flex-start; gap: 0.5rem;
-}
-
-.btn-ai {
-  margin-top: 1rem;
-  background: var(--gradient); border: none; border-radius: 12px;
-  padding: 0.9rem 2rem; color: white;
-  font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 700;
-  cursor: pointer; transition: all 0.25s;
-  display: flex; align-items: center; gap: 0.5rem;
-}
-.btn-ai:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
-.btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-/* Mic Button */
-.btn-mic {
-  position: absolute;
-  left: 20px;
-  top: 20px;
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: var(--surface2);
-  color: var(--text);
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-.btn-mic:hover { background: var(--accent); }
-.btn-mic.recording {
-  background: var(--danger);
-  animation: pulse-mic 1.5s infinite;
-}
-@keyframes pulse-mic {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-/* AI result panel */
-.ai-result {
-  margin-top: 1.5rem;
-  background: rgba(99,102,241,0.05);
-  border: 1px solid rgba(99,102,241,0.2);
-  border-radius: 16px; padding: 1.5rem;
-  display: none;
-}
-.ai-result.show { display: block; animation: fadeIn 0.4s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-.ai-result-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1.25rem;
-}
-.ai-result-title { font-size: 0.9rem; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 0.5rem; }
-
 /* Form fields grid */
 .fields-grid {
   display: grid; grid-template-columns: 1fr 1fr;
@@ -240,12 +158,16 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .form-label { font-size: 0.85rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
 .form-label::before { content: '•'; color: var(--accent); font-size: 1.2rem; line-height: 1; }
 .form-input, .form-select, .form-textarea {
+  width: 100%;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 10px; padding: 0.7rem 0.9rem;
   color: var(--text); font-family: 'Cairo', sans-serif;
   font-size: 0.88rem; outline: none;
   transition: border-color 0.2s, background 0.2s;
+  text-align: right;
+  display: block;
+  box-sizing: border-box;
 }
 .form-input:focus, .form-select:focus { border-color: var(--accent); background: rgba(99,102,241,0.05); }
 .form-select option { background: #111827; }
@@ -262,6 +184,9 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--surface);
   user-select: none;
+  justify-content: flex-start;
+  text-align: right;
+  direction: rtl;
 }
 .radio-opt input { display: none; }
 .radio-opt:has(input:checked) {
@@ -280,7 +205,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   width: 100%;
 }
 @media (max-width: 600px) {
-  .objectives-grid { grid-template-columns: 1fr; }
+  .objectives-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* Submit */
@@ -338,15 +263,15 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
   flex-shrink: 0;
   margin-right: 0.5rem;
 }
-.hist-client-wrap { display: flex; align-items: center; gap: 0.75rem; }
+.hist-client-wrap { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
 .hist-client-icon {
   width: 40px; height: 40px; border-radius: 12px;
   background: var(--gradient);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem; flex-shrink: 0;
 }
-.hist-client { font-weight: 800; font-size: 1rem; }
-.hist-account { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+.hist-client { font-weight: 800; font-size: 0.95rem; line-height: 1.3; overflow: hidden; }
+.hist-account { font-size: 0.7rem; color: var(--muted); margin-top: 0.1rem; opacity: 0.8; }
 .hist-date-badge {
   font-size: 0.75rem; color: var(--muted); white-space: nowrap;
   background: var(--surface); border: 1px solid var(--border);
@@ -428,17 +353,23 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
 /* Responsive — mobile first */
 @media (max-width: 900px) {
-  .sidebar { transform: translateX(100%); opacity: 0; pointer-events: none; }
-  .sidebar.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
-  .main { margin-right: 0; padding: 1rem 1rem 5rem; }
+  .sidebar { transform: translateX(100%); width: 280px; }
+  .sidebar.show { transform: translateX(0); }
+  .main { margin: 0 !important; padding: 1rem 0.5rem 5rem !important; width: 100% !important; overflow-x: hidden; }
   .fields-grid { grid-template-columns: 1fr; }
   .fields-grid .full { grid-column: 1; }
-  .hist-details { grid-template-columns: 1fr; }
-  .hist-detail.full { grid-column: 1; }
   .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
   .page-title { font-size: 1.25rem; }
-  .content-tabs { flex-wrap: wrap; }
-  .ctab { font-size: 0.8rem; padding: 0.6rem 0.5rem; }
+  .objectives-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .radio-opt { padding: 0.6rem 0.5rem; font-size: 0.72rem; flex: 1; min-width: 140px; }
+  .hist-header { padding: 0.85rem 0.6rem; gap: 0.4rem; }
+  .hist-client-icon { width: 32px; height: 32px; font-size: 0.9rem; }
+  .hist-client { font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
+  .hist-date-badge { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
+}
+@media (max-width: 480px) {
+  .objectives-grid { grid-template-columns: 1fr 1fr; }
+  .radio-opt { padding: 0.5rem 0.75rem; font-size: 0.75rem; }
 }
 
 /* Mobile Bottom Navigation */
@@ -584,50 +515,14 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
       <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
       <div>
         <div class="page-title" id="page-title">تسجيل زيارة جديدة</div>
-        <div class="page-subtitle" id="page-subtitle">أدخل تفاصيل اجتماعك وسيقوم الذكاء الاصطناعي بتعبئة النموذج تلقائياً</div>
+        <div class="page-subtitle" id="page-subtitle">أدخل تفاصيل اجتماعك في النموذج أدناه</div>
       </div>
     </div>
     <div class="date-badge" id="date-badge"></div>
   </div>
 
-  </div>
-
-
   <!-- NEW CHECKIN TAB -->
   <div id="tab-new">
-
-    <!-- AI Input card -->
-    <div class="card" style="margin-bottom:1.5rem">
-      <div class="card-title">
-        🧠 الإدخال الذكي بالذكاء الاصطناعي
-        <span class="ai-badge">GPT-4o</span>
-      </div>
-
-      <div class="ai-input-area">
-        <textarea class="ai-textarea" id="ai-input" placeholder="اكتب تفاصيل الاجتماع بأي صيغة...
-
-مثال: زرت شركة الأفق اليوم الساعة 2 ظهراً بخصوص تمويل الأعمال. كان مدير الحساب حاضراً. هدف الاجتماع مناقشة تجديد العقد. الزيارة القادمة الأسبوع القادم."></textarea>
-        <button class="btn-mic" id="btn-mic" onclick="toggleRecord()" title="إدخال الصوت">🎤</button>
-        <div class="ai-hint">
-          💡 يمكنك الكتابة بالعربي أو الإنجليزي أو بالاثنين معاً — وسيستخرج النظام البيانات تلقائياً
-        </div>
-        <button class="btn-ai" id="btn-ai" onclick="runAI()">
-          <span>✨</span> استخراج البيانات بالذكاء الاصطناعي
-        </button>
-      </div>
-
-      <!-- AI Result preview -->
-      <div class="ai-result" id="ai-result">
-        <div class="ai-result-header">
-          <div class="ai-result-title">✅ تم استخراج البيانات — راجع وعدّل إن لزم</div>
-          <button onclick="clearAI()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem">مسح ✕</button>
-        </div>
-        <div style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">
-          تم تعبئة النموذج أدناه تلقائياً. يمكنك تعديل أي بيان قبل الحفظ.
-        </div>
-      </div>
-    </div>
-
     <!-- Manual form -->
     <div class="card">
       <div class="card-title">📝 بيانات الزيارة</div>
@@ -636,7 +531,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
         <div class="form-group full">
           <label class="form-label">👤 اسم العميل أو الحساب *</label>
-          <input class="form-input" id="f-client-search" list="clients-list" placeholder="ابحث باسم الشركة أو رقم Farabi..." onchange="onClientSelect()" autocomplete="off" />
+          <input class="form-input" id="f-client-search" list="clients-list" placeholder="ابحث باسم الشركة أو رقم Farabi..." oninput="onClientSelect()" onchange="onClientSelect()" autocomplete="off" />
           <datalist id="clients-list"></datalist>
           <input type="hidden" id="f-client" />
           <input type="hidden" id="f-account" />
@@ -912,142 +807,7 @@ document.getElementById('user-name').textContent   = empName;
 document.getElementById('user-avatar').textContent = empName.charAt(0);
 document.getElementById('date-badge').textContent  = new Date().toLocaleDateString('ar-SA', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
-// ── AI Extract ───────────────────────────────────────────────────────────────
 let followups = [];
-let mediaRecorder;
-let audioChunks = [];
-let isRecording = false;
-
-async function toggleRecord() {
-  const micBtn = document.getElementById('btn-mic');
-  
-  if (!isRecording) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      
-      mediaRecorder.addEventListener("dataavailable", event => {
-        audioChunks.push(event.data);
-      });
-      
-      mediaRecorder.addEventListener("stop", async () => {
-        micBtn.classList.remove('recording');
-        micBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></span>';
-        
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.webm');
-        
-        try {
-          const res = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData
-          });
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.error);
-          
-          const textArea = document.getElementById('ai-input');
-          if(textArea.value.trim() !== "") {
-            textArea.value += "\n" + json.text;
-          } else {
-            textArea.value = json.text;
-          }
-          toast('✅ تم تفريغ الصوت بنجاح!', true);
-        } catch(e) {
-          toast('⚠️ خطأ في تحليل الصوت: ' + e.message, false);
-        }
-        
-        micBtn.innerHTML = '🎤';
-      });
-      
-      mediaRecorder.start();
-      isRecording = true;
-      micBtn.classList.add('recording');
-      micBtn.title = 'إيقاف التسجيل';
-      
-    } catch (err) {
-      toast('⚠️ لا يمكن الوصول للميكروفون! يرجى السماح بالصلاحية.', false);
-    }
-  } else {
-    // Stop recording
-    mediaRecorder.stop();
-    isRecording = false;
-    mediaRecorder.stream.getTracks().forEach(t => t.stop());
-    micBtn.title = 'إدخال الصوت';
-  }
-}
-
-async function runAI() {
-  const msg = document.getElementById('ai-input').value.trim();
-  if (!msg) return;
-  const btn = document.getElementById('btn-ai');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> جاري التحليل...';
-
-  try {
-    const res = await fetch('/api/extract', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({message: msg})
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error);
-    fillForm(json.data);
-    document.getElementById('ai-result').classList.add('show');
-    toast('✅ تم استخراج البيانات بنجاح!', true);
-  } catch(e) {
-    toast('⚠️ خطأ: ' + e.message, false);
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = '<span>✨</span> استخراج البيانات بالذكاء الاصطناعي';
-}
-
-function fillForm(d) {
-  const v = (id, val) => { if(val) document.getElementById(id).value = val; };
-  v('f-client-search', d.client_name);
-  if(d.client_name) onClientSelect(); // Trigger lookup
-  v('f-product',   d.product);
-  v('f-stakeholder-name', d.stakeholder_name);
-  v('f-checkin-date', d.checkin_date);
-  v('f-checkin-start', d.checkin_start_time);
-  v('f-checkin-end', d.checkin_end_time);
-  v('f-objective-clarify', d.meeting_objective);
-  v('f-notes',     d.notes);
-  v('f-nextvisit', d.next_visit_date);
-
-  const setRadio = (name, val) => {
-    if(val === null || val === undefined) return;
-    const rb = document.querySelector(`input[name="${name}"][value="${val}"]`);
-    if(rb) rb.checked = true;
-  };
-
-  setRadio('f-approach', d.checkin_approach);
-  setRadio('f-type', d.meeting_type);
-  setRadio('f-mpr', d.associated_mpr);
-  setRadio('f-cs-dir', d.cs_dir_attended);
-  setRadio('f-mpm', d.mpm_attended);
-  setRadio('f-hesham', d.hesham_attended);
-  setRadio('f-renewal', d.renewal_acct_mgr_attended);
-  setRadio('f-sentiment', d.sentiment);
-  setRadio('f-mom-generated', d.mom_generated);
-  setRadio('f-mom-shared', d.mom_shared);
-  setRadio('f-feedback-shared', d.feedback_shared);
-
-  if (Array.isArray(d.objectives_list)) {
-     document.querySelectorAll('.obj-chk').forEach(chk => {
-       if (d.objectives_list.includes(chk.value)) chk.checked = true;
-     });
-  }
-
-  followups = Array.isArray(d.follow_up_actions) ? [...d.follow_up_actions] : [];
-  renderFollowups();
-}
-
-function clearAI() {
-  document.getElementById('ai-result').classList.remove('show');
-}
 
 // ── Followups ─────────────────────────────────────────────────────────────────
 function addFollowup() {
@@ -1129,15 +889,13 @@ async function submitCheckin() {
     const res = await fetch('/api/checkins', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ data, employee_id: empId, employee_name: empName, raw_message: document.getElementById('ai-input').value })
+      body: JSON.stringify({ data, employee_id: empId, employee_name: empName })
     });
     const json = await res.json();
     if(!res.ok) throw new Error(json.error);
     toast('🎉 تم حفظ بيانات الزيارة بنجاح! رقم السجل: #' + json.id, true);
     
-    // Immediately reload history so the new visit goes into the history array and the "سجل زياراتي" UI
     await loadHistory();
-    
     resetForm();
   } catch(e) {
     toast('⚠️ خطأ في الحفظ: ' + e.message, false);
@@ -1148,13 +906,12 @@ async function submitCheckin() {
 }
 
 function resetForm() {
-  ['f-client-search','f-client','f-account','f-product','f-checkin-date','f-checkin-start','f-checkin-end','f-objective-clarify','f-notes','f-nextvisit','f-stakeholder-name','ai-input'].forEach(id => { 
+  ['f-client-search','f-client','f-account','f-product','f-checkin-date','f-checkin-start','f-checkin-end','f-objective-clarify','f-notes','f-nextvisit','f-stakeholder-name'].forEach(id => { 
     if(document.getElementById(id)) document.getElementById(id).value = ''; 
   });
   document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
   document.querySelectorAll('input[type="checkbox"]').forEach(r => r.checked = false);
   followups = []; renderFollowups();
-  document.getElementById('ai-result').classList.remove('show');
 }
 
 // ── History ───────────────────────────────────────────────────────────────────
@@ -1304,6 +1061,30 @@ function toast(msg, success=true) {
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
+function onClientSelect() {
+  const input = document.getElementById('f-client-search');
+  const val = input.value.trim();
+  if(!val) return;
+  
+  const list = document.getElementById('clients-list');
+  const opts = Array.from(list.getElementsByTagName('option'));
+  
+  // Find match
+  const match = opts.find(o => o.value === val);
+  
+  if (match) {
+    const account = match.getAttribute('data-account');
+    const name = match.getAttribute('data-name');
+    document.getElementById('f-client').value = name;
+    document.getElementById('f-account').value = account;
+    
+    // Success — trigger loads
+    console.log('Client selected:', name, account);
+    loadStakeholders(account);
+    fetchPreviousVisit();
+  }
+}
+
 // ── Delete ────────────────────────────────────────────────────────────────────
 async function deleteCheckin(id, btn) {
   // Show confirmation dialog
@@ -1333,7 +1114,7 @@ async function deleteCheckin(id, btn) {
     const res = await fetch(`/api/checkins/${id}`, {
       method: 'DELETE',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ employee_id: empId, role: userData.role })
+      body: JSON.stringify({ employee_id: empId, employee_name: empName, role: userData.role })
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error);

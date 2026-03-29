@@ -145,9 +145,11 @@ def latest_checkin():
 @app.route('/api/checkins/<int:record_id>', methods=['DELETE'])
 def delete_checkin_api(record_id):
     data = request.json or {}
-    employee_id = data.get('employee_id', '')
-    role = data.get('role', 'employee')
-    success = delete_checkin(record_id, employee_id, role)
+    employee_id   = data.get('employee_id', '')
+    employee_name = data.get('employee_name', '')
+    role          = data.get('role', 'employee')
+    
+    success = delete_checkin(record_id, employee_id, role, employee_name)
     if success:
         return jsonify({'success': True})
     return jsonify({'error': 'لم يتم العثور على السجل أو لا تملك صلاحية الحذف'}), 403
