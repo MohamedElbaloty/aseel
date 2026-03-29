@@ -183,6 +183,34 @@ def get_all_checkins(limit=200):
             rows = c.execute(SQL.replace('%s','?'), (limit,)).fetchall()
         return [row_to_dict(r) for r in rows]
 
+# ── Fetch latest ──────────────────────────────────────────────────────────────
+def get_latest_checkin(emp_id, client_name, stakeholder_name=None):
+    initialize_db()
+    
+    SQL = 'SELECT * FROM checkins WHERE employee_id=%s AND client_name=%s'
+    vals = [emp_id, client_name]
+    
+    if stakeholder_name:
+        SQL += ' AND stakeholder_name=%s'
+        vals.append(stakeholder_name)
+        
+    SQL += ' ORDER BY created_at DESC LIMIT 1'
+    
+    if USE_PG:
+        import psycopg2.extras
+        conn = get_pg()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(SQL, tuple(vals))
+                row = cur.fetchone()
+            return row_to_dict(row) if row else None
+        finally:
+            conn.close()
+    else:
+        with get_sqlite() as c:
+            row = c.execute(SQL.replace('%s','?'), tuple(vals)).fetchone()
+        return row_to_dict(row) if row else None
+
 # ── Fetch employee ────────────────────────────────────────────────────────────
 def get_employee_checkins(emp_id, limit=20):
     initialize_db()

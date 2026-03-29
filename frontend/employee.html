@@ -654,7 +654,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
         <div class="form-group full" id="group-stakeholder-new">
           <label class="form-label">اسم الشخص / الجهة (إن لم يكن بالقائمة)</label>
-          <input class="form-input" id="f-stakeholder-name" placeholder="اسم الشخص الذي قابلته..." />
+          <input class="form-input" id="f-stakeholder-name" placeholder="اسم الشخص الذي قابلته..." onblur="fetchPreviousVisit()" />
         </div>
 
         <div class="form-group full"><hr style="border-color:var(--border)"></div>
@@ -1341,15 +1341,17 @@ function onClientSelect() {
   const input = document.getElementById('f-client-search').value;
   const farabiArr = input.split(' - ');
   const possibleFarabi = farabiArr[0].trim();
-  const client = allClients.find(c => c.farabi_account === possibleFarabi || `${c.farabi_account} - ${c.client_name}` === input);
+  const foundClient = allClients.find(c => c.farabi_account === possibleFarabi || `${c.farabi_account} - ${c.client_name}` === input);
   
-  if (client) {
-    document.getElementById('f-client').value = client.client_name;
-    document.getElementById('f-account').value = client.farabi_account;
-    loadStakeholders(client.farabi_account);
+  if (foundClient) {
+    document.getElementById('f-client').value = foundClient.client_name;
+    document.getElementById('f-account').value = foundClient.farabi_account;
+    loadStakeholders(foundClient.farabi_account);
+    fetchPreviousVisit();
   } else {
     document.getElementById('f-client').value = '';
     document.getElementById('f-account').value = '';
+    fetchPreviousVisit();
   }
 }
 
@@ -1378,7 +1380,58 @@ function toggleStakeholderList() {
 function onStakeholderSelect() {
   if(document.querySelector('input[name="has-stakeholder"]:checked').value === 'yes') {
      document.getElementById('f-stakeholder-name').value = document.getElementById('f-stakeholder-select').value;
+     fetchPreviousVisit();
   }
+}
+
+async function fetchPreviousVisit() {
+  const clientInputDisplay = document.getElementById('f-client-search').value.trim();
+  const clientHidden = document.getElementById('f-client').value;
+  const client = clientHidden || clientInputDisplay;
+  const stakeholder = document.getElementById('f-stakeholder-name').value.trim();
+  
+  if (!client) return;
+  
+  try {
+    const url = `/api/checkins/latest?employee_id=${empId}&client_name=${encodeURIComponent(client)}` + (stakeholder ? `&stakeholder_name=${encodeURIComponent(stakeholder)}` : '');
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d && d.client_name) {
+      toast('🪄 جاري جلب تفاصيل الزيارة السابقة لملء الحقول التلقائية...', true);
+      
+      const v = (id, val) => { const el = document.getElementById(id); if (el && val && !el.value) el.value = val; };
+      
+      // Only Pre-fill if fields are empty or not touched
+      v('f-product', d.product);
+      
+      const setRadio = (name, val) => {
+        if(val === null || val === undefined) return;
+        const currentChecked = document.querySelector(`input[name="${name}"]:checked`);
+        if (!currentChecked) {
+          const rb = document.querySelector(`input[name="${name}"][value="${val}"]`);
+          if(rb) rb.checked = true;
+        }
+      };
+      
+      setRadio('f-approach', d.checkin_approach);
+      setRadio('f-type', d.meeting_type);
+      setRadio('f-mpr', d.associated_mpr);
+      setRadio('f-cs-dir', d.cs_dir_attended);
+      setRadio('f-mpm', d.mpm_attended);
+      setRadio('f-hesham', d.hesham_attended);
+      setRadio('f-renewal', d.renewal_acct_mgr_attended);
+      
+      // Let's also restore Objectives if no objectives checked yet
+      if (Array.isArray(d.objectives_list) && d.objectives_list.length > 0) {
+        const anyChecked = document.querySelector('.obj-chk:checked');
+        if (!anyChecked) {
+          document.querySelectorAll('.obj-chk').forEach(chk => {
+            if (d.objectives_list.includes(chk.value)) chk.checked = true;
+          });
+        }
+      }
+    }
+  } catch(e) { console.error('Error fetching old visit:', e); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -14,7 +14,7 @@ from db.database import (
     initialize_db, save_checkin, get_all_checkins,
     get_employee_checkins, get_stats, get_employees,
     delete_checkin, delete_employee_visits, delete_all_visits,
-    get_clients, get_stakeholders
+    get_clients, get_stakeholders, get_latest_checkin
 )
 from ai.extractor import extract_checkin_data, transcribe_audio
 
@@ -128,6 +128,19 @@ def clients():
 def stakeholders(farabi_account):
     """Return all stakeholders for a specific client"""
     return jsonify(get_stakeholders(farabi_account))
+
+@app.route('/api/checkins/latest', methods=['GET'])
+def latest_checkin():
+    """Return the latest checkin for a specific client (and optionally stakeholder) for auto-filling forms"""
+    emp_id = request.args.get('employee_id')
+    client_name = request.args.get('client_name')
+    stakeholder_name = request.args.get('stakeholder_name')
+    
+    if not emp_id or not client_name:
+        return jsonify({'error': 'employee_id and client_name are required'}), 400
+        
+    record = get_latest_checkin(emp_id, client_name, stakeholder_name)
+    return jsonify(record) if record else jsonify({})
 
 @app.route('/api/checkins/<int:record_id>', methods=['DELETE'])
 def delete_checkin_api(record_id):
