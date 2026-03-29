@@ -20,18 +20,29 @@ def get_client():
 SYSTEM_PROMPT = """You are an AI assistant extracting structured post-visit check-in data from free-text messages (Arabic, English, or mixed).
 
 Extract these fields (use null if not mentioned):
-- client_name: Client/company name
-- account_number: Account ID or number
-- product: Product or service discussed
-- visit_reason: Reason/purpose of visit
-- account_manager_present: boolean
-- admin_manager_present: boolean
-- meeting_datetime: ISO 8601 (use today's date if only time given)
-- meeting_objective: Main goal of the meeting
-- next_visit_date: ISO 8601 if mentioned
-- meeting_type: "in_person" | "phone_call" | "online"
-- notes: Additional notes
-- follow_up_actions: Array of action items
+- client_name
+- account_number
+- product
+- stakeholder_name: Person met
+- checkin_date: YYYY-MM-DD
+- checkin_start_time: HH:MM
+- checkin_end_time: HH:MM
+- checkin_approach: "Proactive Check-In" | "Reactive Check-In"
+- meeting_type: "On-Site Visit" | "On-Line Meeting" | "Phone Call"
+- associated_mpr: boolean
+- objectives_list: Array of strings matching exactly check-in objectives like "Kick-Off Meeting", "PoC Delivery", "Feedback Collection", etc.
+- meeting_objective: detailed clarification
+- cs_dir_attended: boolean
+- mpm_attended: boolean
+- hesham_attended: boolean
+- renewal_acct_mgr_attended: boolean
+- sentiment: "Positive" | "Neutral" | "Negative"
+- mom_generated: boolean
+- mom_shared: boolean
+- notes: feedback or additional notes
+- follow_up_actions: Array of strings (action items)
+- feedback_shared: boolean
+- next_visit_date: YYYY-MM-DD
 
 Today: {today}
 

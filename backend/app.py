@@ -13,7 +13,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from db.database import (
     initialize_db, save_checkin, get_all_checkins,
     get_employee_checkins, get_stats, get_employees,
-    delete_checkin, delete_employee_visits, delete_all_visits
+    delete_checkin, delete_employee_visits, delete_all_visits,
+    get_clients, get_stakeholders
 )
 from ai.extractor import extract_checkin_data, transcribe_audio
 
@@ -117,6 +118,16 @@ def stats():
 @app.route('/api/employees', methods=['GET'])
 def employees():
     return jsonify(get_employees())
+
+@app.route('/api/clients', methods=['GET'])
+def clients():
+    """Return all imported clients / accounts"""
+    return jsonify(get_clients())
+
+@app.route('/api/clients/<path:farabi_account>/stakeholders', methods=['GET'])
+def stakeholders(farabi_account):
+    """Return all stakeholders for a specific client"""
+    return jsonify(get_stakeholders(farabi_account))
 
 @app.route('/api/checkins/<int:record_id>', methods=['DELETE'])
 def delete_checkin_api(record_id):

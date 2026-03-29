@@ -618,71 +618,188 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 
       <div class="fields-grid">
 
-        <div class="form-group">
-          <label class="form-label">👤 اسم العميل *</label>
-          <input class="form-input" id="f-client" placeholder="اسم الشركة أو العميل" />
+        <div class="form-group full">
+          <label class="form-label">👤 اسم العميل أو الحساب *</label>
+          <input class="form-input" id="f-client-search" list="clients-list" placeholder="ابحث باسم الشركة أو رقم Farabi..." onchange="onClientSelect()" autocomplete="off" />
+          <datalist id="clients-list"></datalist>
+          <input type="hidden" id="f-client" />
+          <input type="hidden" id="f-account" />
         </div>
 
-        <div class="form-group">
-          <label class="form-label">🔢 رقم الحساب</label>
-          <input class="form-input" id="f-account" placeholder="ACC-XXXX" />
-        </div>
-
-        <div class="form-group">
+        <div class="form-group full">
           <label class="form-label">📦 المنتج / الخدمة *</label>
-          <input class="form-input" id="f-product" placeholder="اسم المنتج أو الخدمة" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">📞 نوع الاجتماع *</label>
-          <select class="form-select" id="f-type">
-            <option value="">اختر النوع</option>
-            <option value="in_person">🏢 حضوري</option>
-            <option value="phone_call">📞 مكالمة هاتفية</option>
-            <option value="online">💻 أونلاين</option>
+          <select class="form-select" id="f-product">
+            <option value="">اختر المنتج</option>
+            <option value="RiCH">RiCH</option>
+            <option value="Availo">Availo</option>
+            <option value="OLE5">OLE5</option>
+            <option value="Msegat">Msegat</option>
           </select>
         </div>
 
         <div class="form-group full">
-          <label class="form-label">🎯 سبب الزيارة *</label>
-          <input class="form-input" id="f-reason" placeholder="ما سبب هذه الزيارة؟" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">📅 تاريخ ووقت الاجتماع</label>
-          <input type="datetime-local" class="form-input" id="f-datetime" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">📆 الزيارة القادمة</label>
-          <input type="datetime-local" class="form-input" id="f-nextvisit" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">👔 حضور مدير الحساب</label>
-          <div class="radio-group">
-            <label class="radio-opt"><input type="radio" name="acct-mgr" value="true"> ✅ نعم</label>
-            <label class="radio-opt"><input type="radio" name="acct-mgr" value="false"> ❌ لا</label>
+          <label class="form-label">👥 هل كان الاجتماع مع جهة أو شخص معرف مسبقاً؟ *</label>
+          <div class="radio-group" onchange="toggleStakeholderList()">
+            <label class="radio-opt"><input type="radio" name="has-stakeholder" value="yes"> ✅ نعم</label>
+            <label class="radio-opt"><input type="radio" name="has-stakeholder" value="no" checked> ❌ لا</label>
           </div>
         </div>
 
+        <div class="form-group full" id="group-stakeholder" style="display:none;">
+          <label class="form-label">اختر الشخص (Stakeholder)</label>
+          <select class="form-select" id="f-stakeholder-select" onchange="onStakeholderSelect()">
+            <option value="">-- يرجى اختيار العميل أولاً --</option>
+          </select>
+        </div>
+
+        <div class="form-group full" id="group-stakeholder-new">
+          <label class="form-label">اسم الشخص / الجهة (إن لم يكن بالقائمة)</label>
+          <input class="form-input" id="f-stakeholder-name" placeholder="اسم الشخص الذي قابلته..." />
+        </div>
+
+        <div class="form-group full"><hr style="border-color:var(--border)"></div>
+
         <div class="form-group">
-          <label class="form-label">🏛️ حضور مدير الإدارة</label>
+          <label class="form-label">📅 Check-In Date *</label>
+          <input type="date" class="form-input" id="f-checkin-date" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">⏱️ Check-In Start Time *</label>
+          <input type="time" class="form-input" id="f-checkin-start" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">⏱️ Check-In End Time *</label>
+          <input type="time" class="form-input" id="f-checkin-end" />
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">🎯 Check-In Approach *</label>
           <div class="radio-group">
-            <label class="radio-opt"><input type="radio" name="admin-mgr" value="true"> ✅ نعم</label>
-            <label class="radio-opt"><input type="radio" name="admin-mgr" value="false"> ❌ لا</label>
+            <label class="radio-opt"><input type="radio" name="f-approach" value="Proactive Check-In"> Proactive Check-In</label>
+            <label class="radio-opt"><input type="radio" name="f-approach" value="Reactive Check-In"> Reactive Check-In</label>
           </div>
         </div>
 
         <div class="form-group full">
-          <label class="form-label">🏆 هدف الاجتماع</label>
-          <textarea class="form-textarea" id="f-objective" placeholder="ما هو الهدف الرئيسي من هذا الاجتماع؟"></textarea>
+          <label class="form-label">📞 Check-In Type *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-type" value="On-Site Visit"> On-Site Visit</label>
+            <label class="radio-opt"><input type="radio" name="f-type" value="On-Line Meeting"> On-Line Meeting</label>
+            <label class="radio-opt"><input type="radio" name="f-type" value="Phone Call"> Phone Call</label>
+          </div>
         </div>
 
         <div class="form-group full">
-          <label class="form-label">📝 ملاحظات إضافية</label>
-          <textarea class="form-textarea" id="f-notes" placeholder="أي ملاحظات أو معلومات إضافية..."></textarea>
+          <label class="form-label">Does the Check-In associated with MPR? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-mpr" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-mpr" value="false"> No</label>
+          </div>
         </div>
+
+        <div class="form-group full">
+          <label class="form-label">What's the objective(s) of Check-In? *</label>
+          <div class="radio-group" style="flex-direction:column; align-items:flex-start; gap:0.5rem">
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="PoC Delivery"> PoC Delivery</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Kick-Off Meeting"> Kick-Off Meeting</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Onboarding & Certification"> Onboarding & Certification</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Re-Onboarding & Certification"> Re-Onboarding & Certification</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Drive Feature/Service Adoption"> Drive Feature/Service Adoption</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Introduce non-adopted Feature(s)"> Introduce non-adopted Feature(s)</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Validating Product Idea"> Validating Product Idea</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Product Update Announcement"> Product Update Announcement & Walk-through</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Facilitating Meetings for T2"> Facilitating & Leading Meetings for T2 team</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="New Need Discussion"> New Need Discussion</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Feedback Collection"> Feedback Collection</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Handling Customer Dissatisfaction"> Handling Customer Dissatisfaction</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Stakeholder Relationship Management"> Stakeholder Relationship Management</label>
+            <label class="radio-opt"><input type="checkbox" class="obj-chk" value="Signing Customer Success Story"> Signing Customer Success Story</label>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Clarify the objective(s) of Check-In?</label>
+          <textarea class="form-textarea" id="f-objective-clarify" placeholder="Your answer"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CS Dir. Attended? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-cs-dir" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-cs-dir" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">MPM Attended? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-mpm" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-mpm" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">For Msegat ONLY. Hesham Attended? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-hesham" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-hesham" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Renewal Account Manager Attended? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-renewal" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-renewal" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Check-In Sentiment *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-sentiment" value="Positive"> Positive</label>
+            <label class="radio-opt"><input type="radio" name="f-sentiment" value="Neutral"> Neutral</label>
+            <label class="radio-opt"><input type="radio" name="f-sentiment" value="Negative"> Negative</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Did you generate MoM? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-mom-generated" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-mom-generated" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Did you share MoM with customer? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-mom-shared" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-mom-shared" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Insert Feedback (if any)</label>
+          <textarea class="form-textarea" id="f-notes" placeholder="Your answer"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Are there any feedback collected you share? *</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="f-feedback-shared" value="true"> Yes</label>
+            <label class="radio-opt"><input type="radio" name="f-feedback-shared" value="false"> No</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">📆 What's the upcoming check-in date?</label>
+          <input type="date" class="form-input" id="f-nextvisit" />
+        </div>
+
+
 
         <div class="form-group full">
           <label class="form-label">✔️ متابعات / Action Items</label>
@@ -873,24 +990,40 @@ async function runAI() {
 
 function fillForm(d) {
   const v = (id, val) => { if(val) document.getElementById(id).value = val; };
-  v('f-client',    d.client_name);
-  v('f-account',   d.account_number);
+  v('f-client-search', d.client_name);
+  if(d.client_name) onClientSelect(); // Trigger lookup
   v('f-product',   d.product);
-  v('f-reason',    d.visit_reason);
-  v('f-objective', d.meeting_objective);
+  v('f-stakeholder-name', d.stakeholder_name);
+  v('f-checkin-date', d.checkin_date);
+  v('f-checkin-start', d.checkin_start_time);
+  v('f-checkin-end', d.checkin_end_time);
+  v('f-objective-clarify', d.meeting_objective);
   v('f-notes',     d.notes);
-
-  if(d.meeting_type) document.getElementById('f-type').value = d.meeting_type;
-  if(d.meeting_datetime)  document.getElementById('f-datetime').value  = d.meeting_datetime?.slice(0,16);
-  if(d.next_visit_date)   document.getElementById('f-nextvisit').value = d.next_visit_date?.slice(0,16);
+  v('f-nextvisit', d.next_visit_date);
 
   const setRadio = (name, val) => {
     if(val === null || val === undefined) return;
     const rb = document.querySelector(`input[name="${name}"][value="${val}"]`);
     if(rb) rb.checked = true;
   };
-  setRadio('acct-mgr',  d.account_manager_present);
-  setRadio('admin-mgr', d.admin_manager_present);
+
+  setRadio('f-approach', d.checkin_approach);
+  setRadio('f-type', d.meeting_type);
+  setRadio('f-mpr', d.associated_mpr);
+  setRadio('f-cs-dir', d.cs_dir_attended);
+  setRadio('f-mpm', d.mpm_attended);
+  setRadio('f-hesham', d.hesham_attended);
+  setRadio('f-renewal', d.renewal_acct_mgr_attended);
+  setRadio('f-sentiment', d.sentiment);
+  setRadio('f-mom-generated', d.mom_generated);
+  setRadio('f-mom-shared', d.mom_shared);
+  setRadio('f-feedback-shared', d.feedback_shared);
+
+  if (Array.isArray(d.objectives_list)) {
+     document.querySelectorAll('.obj-chk').forEach(chk => {
+       if (d.objectives_list.includes(chk.value)) chk.checked = true;
+     });
+  }
 
   followups = Array.isArray(d.follow_up_actions) ? [...d.follow_up_actions] : [];
   renderFollowups();
@@ -921,27 +1054,55 @@ function renderFollowups() {
 
 // ── Submit ────────────────────────────────────────────────────────────────────
 async function submitCheckin() {
-  const client = document.getElementById('f-client').value.trim();
+  const clientInputDisplay = document.getElementById('f-client-search').value.trim();
+  const clientHidden = document.getElementById('f-client').value;
+  const client = clientHidden || clientInputDisplay;
   if(!client) { toast('⚠️ اسم العميل مطلوب', false); return; }
 
-  const getRadio = name => {
+  const getRadioVal = name => {
     const el = document.querySelector(`input[name="${name}"]:checked`);
-    return el ? el.value === 'true' : null;
+    return el ? el.value : null;
   };
+
+  const getRadioBool = name => {
+    const val = getRadioVal(name);
+    return val === 'true' ? true : (val === 'false' ? false : null);
+  };
+
+  const getSelectedObjs = () => {
+    const checked = Array.from(document.querySelectorAll('.obj-chk:checked'));
+    return checked.map(c => c.value);
+  };
+
+  const isStakeholderKnown = document.querySelector('input[name="has-stakeholder"]:checked').value === 'yes';
+  const stakeholder = isStakeholderKnown ? document.getElementById('f-stakeholder-select').value : document.getElementById('f-stakeholder-name').value.trim();
 
   const data = {
     client_name:               client,
     account_number:            document.getElementById('f-account').value.trim() || null,
-    product:                   document.getElementById('f-product').value.trim() || null,
-    visit_reason:              document.getElementById('f-reason').value.trim() || null,
-    meeting_type:              document.getElementById('f-type').value || null,
-    account_manager_present:   getRadio('acct-mgr'),
-    admin_manager_present:     getRadio('admin-mgr'),
-    meeting_datetime:          document.getElementById('f-datetime').value || null,
-    meeting_objective:         document.getElementById('f-objective').value.trim() || null,
-    next_visit_date:           document.getElementById('f-nextvisit').value || null,
+    product:                   document.getElementById('f-product').value || null,
+    stakeholder_name:          stakeholder || null,
+    
+    // New exact fields
+    checkin_date:              document.getElementById('f-checkin-date').value || null,
+    checkin_start_time:        document.getElementById('f-checkin-start').value || null,
+    checkin_end_time:          document.getElementById('f-checkin-end').value || null,
+    checkin_approach:          getRadioVal('f-approach'),
+    meeting_type:              getRadioVal('f-type'),
+    associated_mpr:            getRadioBool('f-mpr'),
+    objectives_list:           getSelectedObjs(),
+    meeting_objective:         document.getElementById('f-objective-clarify').value.trim() || null,
+    cs_dir_attended:           getRadioBool('f-cs-dir'),
+    mpm_attended:              getRadioBool('f-mpm'),
+    hesham_attended:           getRadioBool('f-hesham'),
+    renewal_acct_mgr_attended: getRadioBool('f-renewal'),
+    sentiment:                 getRadioVal('f-sentiment'),
+    mom_generated:             getRadioBool('f-mom-generated'),
+    mom_shared:                getRadioBool('f-mom-shared'),
     notes:                     document.getElementById('f-notes').value.trim() || null,
-    follow_up_actions:         followups
+    follow_up_actions:         followups,
+    feedback_shared:           getRadioBool('f-feedback-shared'),
+    next_visit_date:           document.getElementById('f-nextvisit').value || null
   };
 
   const btn = document.getElementById('btn-submit');
@@ -967,9 +1128,11 @@ async function submitCheckin() {
 }
 
 function resetForm() {
-  ['f-client','f-account','f-product','f-reason','f-objective','f-notes','f-datetime','f-nextvisit','ai-input'].forEach(id => { document.getElementById(id).value = ''; });
-  document.getElementById('f-type').value = '';
+  ['f-client-search','f-client','f-account','f-product','f-checkin-date','f-checkin-start','f-checkin-end','f-objective-clarify','f-notes','f-nextvisit','f-stakeholder-name','ai-input'].forEach(id => { 
+    if(document.getElementById(id)) document.getElementById(id).value = ''; 
+  });
   document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll('input[type="checkbox"]').forEach(r => r.checked = false);
   followups = []; renderFollowups();
   document.getElementById('ai-result').classList.remove('show');
 }
@@ -1137,6 +1300,67 @@ async function deleteCheckin(id, btn) {
     toast('⚠️ ' + e.message, false);
   }
 }
+
+// ── Clients & Stakeholders API ──
+let allClients = [];
+async function loadClients() {
+  try {
+    const res = await fetch('/api/clients');
+    allClients = await res.json();
+    const datalist = document.getElementById('clients-list');
+    if (datalist) {
+      datalist.innerHTML = allClients.map(c => `<option value="${c.farabi_account} - ${c.client_name}"></option>`).join('');
+    }
+  } catch(e) { console.error('Error loading clients:', e); }
+}
+
+function onClientSelect() {
+  const input = document.getElementById('f-client-search').value;
+  const farabiArr = input.split(' - ');
+  const possibleFarabi = farabiArr[0].trim();
+  const client = allClients.find(c => c.farabi_account === possibleFarabi || `${c.farabi_account} - ${c.client_name}` === input);
+  
+  if (client) {
+    document.getElementById('f-client').value = client.client_name;
+    document.getElementById('f-account').value = client.farabi_account;
+    loadStakeholders(client.farabi_account);
+  } else {
+    document.getElementById('f-client').value = '';
+    document.getElementById('f-account').value = '';
+  }
+}
+
+async function loadStakeholders(farabi) {
+  try {
+    const res = await fetch(`/api/clients/${encodeURIComponent(farabi)}/stakeholders`);
+    const stakeholders = await res.json();
+    const select = document.getElementById('f-stakeholder-select');
+    if(stakeholders && stakeholders.length) {
+      select.innerHTML = '<option value="">اختر الشخص...</option>' + stakeholders.map(s => `<option value="${s.stakeholder_name}">${s.stakeholder_name} - ${s.stakeholder_title || ''}</option>`).join('');
+    } else {
+      select.innerHTML = '<option value="">لا يوجد أشخاص معرفين مسبقاً لهذا العميل</option>';
+    }
+    // Automatically switch the radio to "Yes" and show dropdown
+    document.querySelector('input[name="has-stakeholder"][value="yes"]').checked = true;
+    toggleStakeholderList();
+  } catch(e) { console.error('Error loading stakeholders:', e); }
+}
+
+function toggleStakeholderList() {
+  const isYes = document.querySelector('input[name="has-stakeholder"]:checked').value === 'yes';
+  document.getElementById('group-stakeholder').style.display = isYes ? 'block' : 'none';
+  document.getElementById('group-stakeholder-new').style.display = isYes ? 'none' : 'block';
+}
+
+function onStakeholderSelect() {
+  if(document.querySelector('input[name="has-stakeholder"]:checked').value === 'yes') {
+     document.getElementById('f-stakeholder-name').value = document.getElementById('f-stakeholder-select').value;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadClients();
+});
 
 function logout() { sessionStorage.clear(); window.location.href = '/'; }
 </script>

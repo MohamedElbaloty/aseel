@@ -31,11 +31,17 @@ CREATE TABLE IF NOT EXISTS checkins (
     id SERIAL PRIMARY KEY,
     employee_id TEXT, employee_name TEXT,
     client_name TEXT, account_number TEXT, product TEXT,
+    stakeholder_name TEXT,
     visit_reason TEXT, meeting_type TEXT,
     account_manager_present INTEGER, admin_manager_present INTEGER,
     meeting_datetime TEXT, meeting_objective TEXT,
     next_visit_date TEXT, notes TEXT, follow_up_actions TEXT,
     raw_message TEXT,
+    checkin_date TEXT, checkin_start_time TEXT, checkin_end_time TEXT,
+    checkin_approach TEXT, associated_mpr INTEGER, objectives_list TEXT,
+    cs_dir_attended INTEGER, mpm_attended INTEGER, hesham_attended INTEGER,
+    renewal_acct_mgr_attended INTEGER, sentiment TEXT,
+    mom_generated INTEGER, mom_shared INTEGER, feedback_shared INTEGER,
     created_at TEXT DEFAULT to_char(NOW(), 'YYYY-MM-DD HH24:MI:SS'),
     synced INTEGER DEFAULT 0
 );
@@ -46,11 +52,18 @@ CREATE TABLE IF NOT EXISTS checkins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     employee_id TEXT, employee_name TEXT,
     client_name TEXT, account_number TEXT, product TEXT,
+    stakeholder_name TEXT,
     visit_reason TEXT, meeting_type TEXT,
     account_manager_present INTEGER, admin_manager_present INTEGER,
     meeting_datetime TEXT, meeting_objective TEXT,
     next_visit_date TEXT, notes TEXT, follow_up_actions TEXT,
-    raw_message TEXT, created_at TEXT DEFAULT (datetime('now')),
+    raw_message TEXT, 
+    checkin_date TEXT, checkin_start_time TEXT, checkin_end_time TEXT,
+    checkin_approach TEXT, associated_mpr INTEGER, objectives_list TEXT,
+    cs_dir_attended INTEGER, mpm_attended INTEGER, hesham_attended INTEGER,
+    renewal_acct_mgr_attended INTEGER, sentiment TEXT,
+    mom_generated INTEGER, mom_shared INTEGER, feedback_shared INTEGER,
+    created_at TEXT DEFAULT (datetime('now')),
     synced INTEGER DEFAULT 0
 );
 """
@@ -91,21 +104,48 @@ def row_to_dict(r):
 def save_checkin(data, emp_id, emp_name, raw=''):
     initialize_db()
     actions = json.dumps(data.get('follow_up_actions') or [], ensure_ascii=False)
-    vals = (
-        emp_id, emp_name,
-        data.get('client_name'), data.get('account_number'), data.get('product'),
-        data.get('visit_reason'), data.get('meeting_type'),
-        b(data.get('account_manager_present')), b(data.get('admin_manager_present')),
-        data.get('meeting_datetime'), data.get('meeting_objective'),
-        data.get('next_visit_date'), data.get('notes'),
-        actions, raw
-    )
-    SQL = """INSERT INTO checkins
-        (employee_id,employee_name,client_name,account_number,product,
-         visit_reason,meeting_type,account_manager_present,admin_manager_present,
-         meeting_datetime,meeting_objective,next_visit_date,notes,
-         follow_up_actions,raw_message)
-        VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+    objectives = json.dumps(data.get('objectives_list') or [], ensure_ascii=False)
+    
+    fields = {
+        'employee_id': emp_id,
+        'employee_name': emp_name,
+        'client_name': data.get('client_name'),
+        'account_number': data.get('account_number'),
+        'product': data.get('product'),
+        'visit_reason': data.get('visit_reason'),
+        'meeting_type': data.get('meeting_type'),
+        'account_manager_present': b(data.get('account_manager_present')),
+        'admin_manager_present': b(data.get('admin_manager_present')),
+        'meeting_datetime': data.get('meeting_datetime'),
+        'meeting_objective': data.get('meeting_objective'),
+        'next_visit_date': data.get('next_visit_date'),
+        'notes': data.get('notes'),
+        'follow_up_actions': actions,
+        'raw_message': raw,
+        'stakeholder_name': data.get('stakeholder_name'),
+        # New columns 
+        'checkin_date': data.get('checkin_date'),
+        'checkin_start_time': data.get('checkin_start_time'),
+        'checkin_end_time': data.get('checkin_end_time'),
+        'checkin_approach': data.get('checkin_approach'),
+        'associated_mpr': b(data.get('associated_mpr')),
+        'objectives_list': objectives,
+        'cs_dir_attended': b(data.get('cs_dir_attended')),
+        'mpm_attended': b(data.get('mpm_attended')),
+        'hesham_attended': b(data.get('hesham_attended')),
+        'renewal_acct_mgr_attended': b(data.get('renewal_acct_mgr_attended')),
+        'sentiment': data.get('sentiment'),
+        'mom_generated': b(data.get('mom_generated')),
+        'mom_shared': b(data.get('mom_shared')),
+        'feedback_shared': b(data.get('feedback_shared')),
+    }
+    
+    cols = list(fields.keys())
+    vals = tuple(fields[col] for col in cols)
+    placeholders = ','.join(['%s'] * len(cols))
+    col_names = ','.join(cols)
+    
+    SQL = f"INSERT INTO checkins ({col_names}) VALUES({placeholders})"
 
     if USE_PG:
         conn = get_pg()
@@ -255,3 +295,42 @@ def delete_all_visits():
     else:
         with get_sqlite() as c:
             count = c.execute('DELETE FROM checkins').rowcount; c.commit(); return count
+
+# ── API for Clients & Stakeholders ────────────────────────────────────────────
+def get_clients():
+    initialize_db()
+    SQL = 'SELECT farabi_account, client_name, acronym, cs_owner, account_manager FROM clients ORDER BY client_name'
+    if USE_PG:
+        import psycopg2.extras
+        conn = get_pg()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(SQL)
+                return [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+    else:
+        with get_sqlite() as c:
+            try:
+                return [dict(r) for r in c.execute(SQL).fetchall()]
+            except:
+                return []
+
+def get_stakeholders(farabi_account):
+    initialize_db()
+    SQL = 'SELECT id, stakeholder_name, stakeholder_title, email, mobile_number, influence_level FROM stakeholders WHERE farabi_account=%s ORDER BY stakeholder_name'
+    if USE_PG:
+        import psycopg2.extras
+        conn = get_pg()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(SQL, (farabi_account,))
+                return [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+    else:
+        with get_sqlite() as c:
+            try:
+                return [dict(r) for r in c.execute(SQL.replace('%s','?'), (farabi_account,)).fetchall()]
+            except:
+                return []
