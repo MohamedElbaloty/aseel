@@ -1422,11 +1422,14 @@ async function fetchPreviousVisit() {
       setRadio('f-renewal', d.renewal_acct_mgr_attended);
       
       // Let's also restore Objectives if no objectives checked yet
-      if (Array.isArray(d.objectives_list) && d.objectives_list.length > 0) {
+      let parsedObjs = [];
+      try { parsedObjs = typeof d.objectives_list === 'string' ? JSON.parse(d.objectives_list) : (d.objectives_list || []); } catch(e){}
+      
+      if (Array.isArray(parsedObjs) && parsedObjs.length > 0) {
         const anyChecked = document.querySelector('.obj-chk:checked');
         if (!anyChecked) {
           document.querySelectorAll('.obj-chk').forEach(chk => {
-            if (d.objectives_list.includes(chk.value)) chk.checked = true;
+            if (parsedObjs.includes(chk.value)) chk.checked = true;
           });
         }
       }
