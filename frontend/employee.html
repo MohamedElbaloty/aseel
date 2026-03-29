@@ -185,6 +185,33 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
 .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
 .btn-ai:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+/* Mic Button */
+.btn-mic {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.btn-mic:hover { background: var(--accent); }
+.btn-mic.recording {
+  background: var(--danger);
+  animation: pulse-mic 1.5s infinite;
+}
+@keyframes pulse-mic {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
 /* AI result panel */
 .ai-result {
   margin-top: 1.5rem;
@@ -564,6 +591,7 @@ body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--tex
         <textarea class="ai-textarea" id="ai-input" placeholder="اكتب تفاصيل الاجتماع بأي صيغة...
 
 مثال: زرت شركة الأفق اليوم الساعة 2 ظهراً بخصوص تمويل الأعمال. كان مدير الحساب حاضراً. هدف الاجتماع مناقشة تجديد العقد. الزيارة القادمة الأسبوع القادم."></textarea>
+        <button class="btn-mic" id="btn-mic" onclick="toggleRecord()" title="إدخال الصوت">🎤</button>
         <div class="ai-hint">
           💡 يمكنك الكتابة بالعربي أو الإنجليزي أو بالاثنين معاً — وسيستخرج النظام البيانات تلقائياً
         </div>
@@ -753,6 +781,69 @@ document.getElementById('date-badge').textContent  = new Date().toLocaleDateStri
 
 // ── AI Extract ───────────────────────────────────────────────────────────────
 let followups = [];
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+async function toggleRecord() {
+  const micBtn = document.getElementById('btn-mic');
+  
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      
+      mediaRecorder.addEventListener("dataavailable", event => {
+        audioChunks.push(event.data);
+      });
+      
+      mediaRecorder.addEventListener("stop", async () => {
+        micBtn.classList.remove('recording');
+        micBtn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0"></span>';
+        
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        
+        try {
+          const res = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error);
+          
+          const textArea = document.getElementById('ai-input');
+          if(textArea.value.trim() !== "") {
+            textArea.value += "\n" + json.text;
+          } else {
+            textArea.value = json.text;
+          }
+          toast('✅ تم تفريغ الصوت بنجاح!', true);
+        } catch(e) {
+          toast('⚠️ خطأ في تحليل الصوت: ' + e.message, false);
+        }
+        
+        micBtn.innerHTML = '🎤';
+      });
+      
+      mediaRecorder.start();
+      isRecording = true;
+      micBtn.classList.add('recording');
+      micBtn.title = 'إيقاف التسجيل';
+      
+    } catch (err) {
+      toast('⚠️ لا يمكن الوصول للميكروفون! يرجى السماح بالصلاحية.', false);
+    }
+  } else {
+    // Stop recording
+    mediaRecorder.stop();
+    isRecording = false;
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    micBtn.title = 'إدخال الصوت';
+  }
+}
 
 async function runAI() {
   const msg = document.getElementById('ai-input').value.trim();

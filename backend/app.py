@@ -15,7 +15,7 @@ from db.database import (
     get_employee_checkins, get_stats, get_employees,
     delete_checkin, delete_employee_visits, delete_all_visits
 )
-from ai.extractor import extract_checkin_data
+from ai.extractor import extract_checkin_data, transcribe_audio
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 CORS(app)
@@ -63,6 +63,26 @@ def extract():
     try:
         extracted = extract_checkin_data(message)
         return jsonify({'data': extracted})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/transcribe', methods=['POST'])
+def transcribe():
+    if 'audio' not in request.files:
+        return jsonify({'error': 'لم يتم العثور على ملف صوتي'}), 400
+    file = request.files['audio']
+    if file.filename == '':
+        return jsonify({'error': 'ملف فارغ'}), 400
+    
+    import tempfile
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+            tmp_path = tmp.name
+        file.save(tmp_path)
+        
+        text = transcribe_audio(tmp_path)
+        os.remove(tmp_path)
+        return jsonify({'text': text})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

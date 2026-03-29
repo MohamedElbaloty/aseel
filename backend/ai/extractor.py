@@ -50,3 +50,11 @@ def extract_checkin_data(message: str) -> dict:
         response_format={'type': 'json_object'}
     )
     return json.loads(resp.choices[0].message.content)
+
+def transcribe_audio(file_path: str) -> str:
+    with open(file_path, "rb") as audio_file:
+        transcription = get_client().audio.transcriptions.create(
+            model="whisper-1", 
+            file=audio_file,
+        )
+    return transcription.text
